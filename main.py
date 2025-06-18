@@ -1,10 +1,13 @@
 # main.py
 import pygame
 import sys
+import random
 
 from player import Player
-from planet import Planet
 from shot import Shot
+
+from planets.normal_planet import NormalPlanet
+from planets.rock_planet import RockPlanet
 
 # --- 初期設定 ---
 pygame.init()
@@ -59,7 +62,9 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.K_ESCAPE: 
+                running = False
+            if event.type == pygame.KEYDOWN: 
                 if event.key == pygame.K_ESCAPE:
                     running = False
 
@@ -77,7 +82,10 @@ def main():
                     shots.add(new_shot)
 
             if event.type == ADDPLANET:
-                new_planet = Planet(SCREEN_WIDTH, SCREEN_HEIGHT)
+                planet_classes = [NormalPlanet, RockPlanet]
+                SelectedPlanetClass = random.choice(planet_classes)
+
+                new_planet = SelectedPlanetClass(SCREEN_WIDTH, SCREEN_HEIGHT)
                 all_sprites.add(new_planet)
                 planets.add(new_planet)
 
@@ -98,15 +106,11 @@ def main():
         # 衝突判定
         # shot_hit_planets は {ショットオブジェクト: [衝突した惑星オブジェクト1, 衝突した惑星オブジェクト2, ...]} の辞書を返す
         # True, True はそれぞれ、衝突したショットと惑星を両方ともグループから削除するかどうか
-        shot_hit_planets = pygame.sprite.groupcollide(shots, planets, True, True)
-        
-        # 衝突があった場合の処理 (今回は、当たったら両方消すだけ)
-        # for shot, hit_planet_list in shot_hit_planets.items():
-        #     # shot は衝突したショットオブジェクト
-        #     # hit_planet_list はそのショットが衝突した惑星オブジェクトのリスト
-        #     for planet in hit_planet_list:
-        #         # ここでスコア加算やエフェクト表示などの処理を行う
-        #         pass # 現時点では何もせず、自動削除に任せる
+        shot_hit_planets = pygame.sprite.groupcollide(shots, planets, True, False)
+
+        for shot, hit_planet_list in shot_hit_planets.items():
+            for planet in hit_planet_list:
+                planet.take_damage(shot.damage)
 
         # 画面を更新
         pygame.display.flip()

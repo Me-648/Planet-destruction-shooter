@@ -13,6 +13,7 @@ class Shot(pygame.sprite.Sprite):
         self.rect.bottom = y # ショットのY座標をプレイヤーの上端に合わせる
 
         self.speed = 15 # ショットの速度
+        self.damage = 1 # ショットのダメージ
 
     def update(self):
         # ショットを上に移動させる
