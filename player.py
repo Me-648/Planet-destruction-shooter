@@ -1,5 +1,6 @@
 # player.py
 import pygame
+from shot import Shot
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, color, keys_left, keys_right, keys_up, keys_down, speed, screen_width, screen_height):
@@ -37,3 +38,7 @@ class Player(pygame.sprite.Sprite):
 
         self.rect.x = max(0, min(self.rect.x, self.screen_width - self.rect.width))
         self.rect.y = max(self.min_y, min(self.rect.y, self.max_y))
+
+    def shoot(self):
+        new_shot = Shot(self.rect.centerx, self.rect.top, self.color)
+        return new_shot
