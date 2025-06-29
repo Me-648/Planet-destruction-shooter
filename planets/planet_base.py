@@ -1,34 +1,50 @@
-# planet.py
 import pygame
 import random
+import os
 
 class BasePlanet(pygame.sprite.Sprite):
-    def __init__(self, screen_width, screen_height, size, color, speed, hp):
-        super().__init__()
+  def __init__(self, screen_width, screen_height, size, color, hp, speed, score_value, image_path=None):
+    super().__init__()
 
-        self.image = pygame.Surface([size, size])
-        self.image.fill(color)
+    if image_path:
+      original_image = pygame.image.load(os.path.join('assets', 'images', image_path)).convert_alpha()
+      self.image = pygame.transform.scale(original_image, (size, size))
+    else:
+      self.image = pygame.Surface([size, size])
+      self.image.fill(color)
 
-        self.rect = self.image.get_rect()
-        self.rect.x = random.randrange(screen_width - self.rect.width)
-        self.rect.y = -self.rect.height
+    self.rect = self.image.get_rect()
 
-        self.speed = speed
-        self.hp = hp
-        self.screen_height = screen_height
+    self.rect.x = random.randrange(screen_width - self.rect.width)
+    self.rect.y = -self.rect.height
 
-    def update(self):
-        self.rect.y += self.speed
+    self.speed = speed
+    self.hp = hp
+    self.score_value = score_value
+    self.screen_height = screen_height
+    self.screen_width = screen_width
 
-        # 画面下まで行ったら消える
-        if self.rect.y > self.screen_height:
-            self.kill()
+    self.destroyed = False
 
-    def take_damage(self, damage_amount):
-        self.hp -= damage_amount
-        if self.hp <= 0:
-            self.kill()
+  def update(self):
+    self.rect.y += self.speed
 
-    # 惑星が破壊されたときに特別な処理を行うためのメソッド (デフォルトは何もしない)
-    def on_destroyed(self):
-        pass
+    # 画面下まで行ったら消える
+    if self.rect.y > self.screen_height:
+      self.kill()
+
+  def take_damage(self, damage_amount):
+    if self.destroyed:
+      return
+
+    self.hp -= damage_amount
+    print(f"惑星HP: {self.hp} / ダメージ: {damage_amount}")
+    if self.hp <= 0:
+        self.destroyed = True
+        print("惑星が破壊されました")
+        self.kill()
+        self.on_destroyed()
+
+  # 惑星が破壊されたときに特別な処理を行うためのメソッド (デフォルトは何もしない)
+  def on_destroyed(self):
+    pass

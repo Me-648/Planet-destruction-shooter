@@ -71,8 +71,30 @@ class GameScreen(GameState):
     for shot, hit_planets_list in shot_hit_planets.items():
       for planet in hit_planets_list:
         planet.take_damage(shot.damage)
+        if planet.hp <= 0:
+          if hasattr(shot, 'owner_player') and shot.owner_player is not None:
+            shot.owner_player.score += planet.score_value
+            print(f"{shot.owner_player.color}プレイヤーが{planet.score_value}スコア獲得！合計: {shot.owner_player.score}")
+
+
+    # 当たり判定
+    player_hit_planets = pygame.sprite.groupcollide(self.players, self.planets, False, True)
+    for player, hit_planets_list in player_hit_planets.items():
+      for planet in hit_planets_list:
+        if player.take_damage(): # プレイヤーのtake_damageメソッドを呼び出す
+          pass
+
   
   def draw(self):
     self.screen.fill(GRAY)
     self.all_sprites.draw(self.screen)
 
+    player1_score_text = self.small_font.render(f"P1スコア: {self.player1.score}", True, BLUE)
+    player1_hp_text = self.small_font.render(f"P1HP: {self.player1.hp}", True, BLUE)
+    self.screen.blit(player1_score_text, (10, 10))
+    self.screen.blit(player1_hp_text, (10, 60))
+    
+    player2_score_text = self.small_font.render(f"P2スコア: {self.player2.score}", True, GREEN)
+    player2_hp_text = self.small_font.render(f"P2HP: {self.player2.hp}", True, GREEN)
+    self.screen.blit(player2_score_text, (self.screen_width - player2_score_text.get_width() - 10, 10))
+    self.screen.blit(player2_hp_text, (self.screen_width - player2_hp_text.get_width() - 10, 60))
