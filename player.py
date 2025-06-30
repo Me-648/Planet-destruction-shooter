@@ -31,6 +31,9 @@ class Player(pygame.sprite.Sprite):
     self.max_y = self.screen_height - self.rect.height
 
   def update(self, keys):
+    if self.hp <= 0:
+      return
+
     if keys[self.keys_left]:
       self.rect.x -= self.speed
     if keys[self.keys_right]:
@@ -40,10 +43,22 @@ class Player(pygame.sprite.Sprite):
     if keys[self.keys_down]:
       self.rect.y += self.speed
 
+    # 画面の端で停止
+    if self.rect.left < 0:
+        self.rect.left = 0
+    if self.rect.right > self.screen_width:
+        self.rect.right = self.screen_width
+    if self.rect.top < 0:
+        self.rect.top = 0
+    if self.rect.bottom > self.screen_height:
+        self.rect.bottom = self.screen_height
+
     self.rect.x = max(0, min(self.rect.x, self.screen_width - self.rect.width))
     self.rect.y = max(self.min_y, min(self.rect.y, self.max_y))
 
   def shoot(self):
+    if self.hp <= 0:
+      return None
     new_shot = Shot(self.rect.centerx, self.rect.top, self.color)
     new_shot.owner_player = self
     return new_shot

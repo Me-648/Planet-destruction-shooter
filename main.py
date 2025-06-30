@@ -4,6 +4,7 @@ import sys
 from game_states.title_screen import TitleScreen
 from game_states.game_screen import GameScreen
 from game_states.how_to_play_screen import HowToPlayScreen
+from game_states.game_over_screen import GameOverScreen
 
 # 初期設定
 pygame.init()
@@ -22,6 +23,7 @@ pygame.display.set_caption("惑星破壊シューティングII (準備中)")
 GAME_STATE_TITLE = "title"    # タイトル画面
 GAME_STATE_PLAYING = "playing"  #ゲームプレイ中
 GAME_STATE_HOW_TO_PLAY = "how_to_play"  # 遊び方説明画面
+GAME_STATE_GAME_OVER = "game_over" #ゲームオーバー画面
 
 class GameManager:
   def __init__(self):
@@ -41,17 +43,21 @@ class GameManager:
     self.title_screen = TitleScreen(self.screen, self.font, self.small_font, self)
     self.game_screen = GameScreen(self.screen, self.font, self.small_font, self)
     self.how_to_play_screen = HowToPlayScreen(self.screen, self.font, self.small_font, self)
+    self.game_over_screen = GameOverScreen(self.screen, self.font, self.small_font, self)
     self.states = {
       GAME_STATE_TITLE: self.title_screen,
       GAME_STATE_PLAYING: self.game_screen,
-      GAME_STATE_HOW_TO_PLAY: self.how_to_play_screen
+      GAME_STATE_HOW_TO_PLAY: self.how_to_play_screen,
+      GAME_STATE_GAME_OVER: self.game_over_screen,
     }
     self.current_state = self.states[GAME_STATE_TITLE]
 
-  def change_state(self, new_state_name):
+  def change_state(self, new_state_name, p1_score=0, p2_score=0):
     if new_state_name in self.states:
       if new_state_name == GAME_STATE_PLAYING:
         self.game_screen.reset_game()
+      elif new_state_name == GAME_STATE_GAME_OVER:
+        self.game_over_screen.set_final_scores(p1_score, p2_score)
       self.current_state = self.states[new_state_name]
       print(f"ゲーム状態が {new_state_name} に変更されました。")
     else:

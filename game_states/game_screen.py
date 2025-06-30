@@ -40,18 +40,21 @@ class GameScreen(GameState):
     self.all_sprites.add(self.player1, self.player2)
     self.players.add(self.player1, self.player2)
 
-    pygame.time.set_timer(self.ADDPLANET, 1000)
+    # 隕石を生成
+    pygame.time.set_timer(self.ADDPLANET, 400)
 
   def handle_event(self, event):
     if event.type == pygame.KEYDOWN:
       if event.key == pygame.K_SPACE:
-        new_shot = self.player1.shoot()
-        self.all_sprites.add(new_shot)
-        self.shots.add(new_shot)
+        shot = self.player1.shoot()
+        if shot:
+          self.all_sprites.add(shot)
+          self.shots.add(shot)
       if event.key == pygame.K_RETURN:
-        new_shot = self.player2.shoot()
-        self.all_sprites.add(new_shot)
-        self.shots.add(new_shot)
+        shot = self.player2.shoot()
+        if shot:
+          self.all_sprites.add(shot)
+          self.shots.add(shot)
     
     if event.type == self.ADDPLANET:
       planet_class = [NormalPlanet, RockPlanet]
@@ -62,7 +65,10 @@ class GameScreen(GameState):
   
   def update(self):
     keys = pygame.key.get_pressed()
-    self.players.update(keys)
+
+    self.player1.update(keys)
+    self.player2.update(keys)
+
     self.planets.update()
     self.shots.update()
 
@@ -83,7 +89,18 @@ class GameScreen(GameState):
       for planet in hit_planets_list:
         if player.take_damage(): # プレイヤーのtake_damageメソッドを呼び出す
           pass
+    
+    # ゲームオーバー判定
+    p1_game_over = (self.player1.hp <= 0)
+    p2_game_over = (self.player2.hp <= 0)
 
+    if p1_game_over and p2_game_over:
+      print("1P2P共にゲームオーバー")
+      self.game_manager.change_state("game_over", self.player1.score, self.player2.score)
+    elif p1_game_over:
+      self.player1.kill()
+    elif p2_game_over:
+      self.player2.kill()
   
   def draw(self):
     self.screen.fill(GRAY)
