@@ -1,5 +1,6 @@
 import pygame
 from shot import Shot
+import os
 
 class Player(pygame.sprite.Sprite):
   def __init__(self, x, y, color, keys_left, keys_right, keys_up, keys_down, speed, screen_width, screen_height):
@@ -30,6 +31,23 @@ class Player(pygame.sprite.Sprite):
     self.min_y = self.screen_height // 2
     self.max_y = self.screen_height - self.rect.height
 
+    # 効果音のロード
+    self.shot_sound = None
+    self.hit_sound = None
+    shot_sound_path = os.path.join('assets', 'sounds', 'shot.mp3')
+    player_hit_sound_path = os.path.join('assets', 'sounds', 'player_hit.mp3')
+    if os.path.exists(shot_sound_path):
+      self.shot_sound = pygame.mixer.Sound(shot_sound_path)
+      self.shot_sound.set_volume(1.0)
+    else:
+      print(f"Warning: Shot sound file not found at {shot_sound_path}")
+    if os.path.exists(player_hit_sound_path):
+      self.hit_sound = pygame.mixer.Sound(player_hit_sound_path)
+      self.hit_sound.set_volume(1.0)
+    else:
+      print(f"効果音がないよ: {player_hit_sound_path}")
+
+
   def update(self, keys):
     if self.hp <= 0:
       return
@@ -59,6 +77,11 @@ class Player(pygame.sprite.Sprite):
   def shoot(self):
     if self.hp <= 0:
       return None
+
+    # ショット音の再生
+    if self.shot_sound:
+      self.shot_sound.play()
+
     new_shot = Shot(self.rect.centerx, self.rect.top, self.color)
     new_shot.owner_player = self
     return new_shot
@@ -69,5 +92,10 @@ class Player(pygame.sprite.Sprite):
       self.hp -= 1
       self.last_hit_time = current_time
       print(f"プレイヤー{self.color}がダメージを受けました！残りHP: {self.hp}")
+
+      # プレイヤー被弾音の再生
+      if self.hit_sound:
+        self.hit_sound.play()
+
       return True
     return False

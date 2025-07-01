@@ -1,5 +1,6 @@
 import pygame
 import random
+import os
 from game_states.game_state import GameState
 from player import Player
 from shot import Shot
@@ -14,6 +15,16 @@ class GameScreen(GameState):
   def __init__(self, screen, font, small_font, game_manager):
     super().__init__(screen, font, small_font, game_manager)
     self.screen_width, self.screen_height = self.screen.get_size()
+
+    # 惑星破壊音のロード
+    self.explosion_sound = None
+    explosion_sound_path = os.path.join('assets', 'sounds', 'explosion.mp3')
+    if os.path.exists(explosion_sound_path):
+      self.explosion_sound = pygame.mixer.Sound(explosion_sound_path)
+      self.explosion_sound.set_volume(0.3)
+    else:
+      print(f"惑星破壊音がないよ: {explosion_sound_path}")
+
     self.ADDPLANET = pygame.USEREVENT + 1
 
     self.all_sprites = pygame.sprite.Group()
@@ -81,6 +92,9 @@ class GameScreen(GameState):
           if hasattr(shot, 'owner_player') and shot.owner_player is not None:
             shot.owner_player.score += planet.score_value
             print(f"{shot.owner_player.color}プレイヤーが{planet.score_value}スコア獲得！合計: {shot.owner_player.score}")
+          if self.explosion_sound:
+            self.explosion_sound.play()
+            # planet.on_destroyed()
 
 
     # 当たり判定

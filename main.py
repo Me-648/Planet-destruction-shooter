@@ -1,5 +1,6 @@
 import pygame
 import sys
+import os
 
 from game_states.title_screen import TitleScreen
 from game_states.game_screen import GameScreen
@@ -8,6 +9,7 @@ from game_states.game_over_screen import GameOverScreen
 
 # 初期設定
 pygame.init()
+pygame.mixer.init()
 
 # 画面サイズ
 # 初期解像度
@@ -39,6 +41,19 @@ class GameManager:
       self.font = pygame.font.Font(None, 74)
       self.small_font = pygame.font.Font(None, 48)
 
+    # BGMのロード
+    self.bgm_paths = {
+      GAME_STATE_TITLE: os.path.join('assets', 'sounds', 'title_bgm.mp3'), # タイトルBGM
+      GAME_STATE_PLAYING: os.path.join('assets', 'sounds', 'game_bgm.mp3'), # ゲームプレイBGM
+      GAME_STATE_GAME_OVER: os.path.join('assets', 'sounds', 'game_over_bgm.mp3'), # ゲームオーバーBGM
+    }
+    # 各BGMの音量
+    self.bgm_volumes = {
+      GAME_STATE_TITLE: 1.0,
+      GAME_STATE_PLAYING: 0.3,
+      GAME_STATE_GAME_OVER: 0.6,
+    }
+
     # 各ゲーム状態のインスタンス
     self.title_screen = TitleScreen(self.screen, self.font, self.small_font, self)
     self.game_screen = GameScreen(self.screen, self.font, self.small_font, self)
@@ -54,6 +69,23 @@ class GameManager:
 
   def change_state(self, new_state_name, p1_score=0, p2_score=0):
     if new_state_name in self.states:
+      pygame.mixer.music.stop()
+
+      new_bgm_path = self.bgm_paths.get(new_state_name)
+      if new_bgm_path and os.path.exists(new_bgm_path):
+        pygame.mixer.music.load(new_bgm_path)
+
+        volume = self.bgm_volumes.get(new_state_name, 1.0)
+        pygame.mixer.music.set_volume(volume)
+
+        if new_state_name == GAME_STATE_GAME_OVER:
+          pygame.mixer.music.play(0)
+        else:
+          pygame.mixer.music.play(-1)
+        
+      else:
+        print(f"bgmない {new_state_name} / {new_bgm_path}")
+
       if new_state_name == GAME_STATE_PLAYING:
         self.game_screen.reset_game()
       elif new_state_name == GAME_STATE_GAME_OVER:
@@ -64,6 +96,9 @@ class GameManager:
       print(f"エラー: 未知のゲーム状態'{new_state_name}'")
 
   def run(self):
+    # タイトル画面のBGMを作成
+    self.change_state(GAME_STATE_TITLE)
+
     clock = pygame.time.Clock()
     FPS = 60
     running = True
