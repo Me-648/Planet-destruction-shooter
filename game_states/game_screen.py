@@ -21,7 +21,7 @@ class GameScreen(GameState):
     explosion_sound_path = os.path.join('assets', 'sounds', 'explosion.mp3')
     if os.path.exists(explosion_sound_path):
       self.explosion_sound = pygame.mixer.Sound(explosion_sound_path)
-      self.explosion_sound.set_volume(0.3)
+      self.explosion_sound.set_volume(0.1)
     else:
       print(f"惑星破壊音がないよ: {explosion_sound_path}")
 

@@ -38,12 +38,12 @@ class Player(pygame.sprite.Sprite):
     player_hit_sound_path = os.path.join('assets', 'sounds', 'player_hit.mp3')
     if os.path.exists(shot_sound_path):
       self.shot_sound = pygame.mixer.Sound(shot_sound_path)
-      self.shot_sound.set_volume(1.0)
+      self.shot_sound.set_volume(0.2)
     else:
       print(f"Warning: Shot sound file not found at {shot_sound_path}")
     if os.path.exists(player_hit_sound_path):
       self.hit_sound = pygame.mixer.Sound(player_hit_sound_path)
-      self.hit_sound.set_volume(1.0)
+      self.hit_sound.set_volume(0.2)
     else:
       print(f"効果音がないよ: {player_hit_sound_path}")
 

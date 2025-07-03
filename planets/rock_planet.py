@@ -9,9 +9,8 @@ class RockPlanet(BasePlanet):
     hp = 3
 
     score_value = 30
-    # image_path = 'rock_planet.png'
-    super().__init__(screen_width, screen_height, size, color, hp, speed, score_value)
-    # super().__init__(screen_width, screen_height, size, color, hp, speed, score_value, image_path)
+    image_path = 'planet_rock.png'
+    super().__init__(screen_width, screen_height, size, color, hp, speed, score_value, image_path)
   
   def on_destroyed(self):
     print("岩石惑星が破壊され、破片をまき散らしました！(まだ実装されていません)")
