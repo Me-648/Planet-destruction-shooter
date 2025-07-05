@@ -34,17 +34,13 @@ class BasePlanet(pygame.sprite.Sprite):
       self.kill()
 
   def take_damage(self, damage_amount):
-    if self.destroyed:
-      return
-
     self.hp -= damage_amount
-    print(f"惑星HP: {self.hp} / ダメージ: {damage_amount}")
     if self.hp <= 0:
-        self.destroyed = True
-        print("惑星が破壊されました")
-        self.kill()
-        self.on_destroyed()
+      self.kill()
+      self.destroyed = True
+      return True # 破壊されたらTrue
+    return False
 
   # 惑星が破壊されたときに特別な処理を行うためのメソッド (デフォルトは何もしない)
-  def on_destroyed(self):
+  def on_destroyed(self, game_screen_instance, destroying_player):
     pass

@@ -6,6 +6,9 @@ from player import Player
 from shot import Shot
 from planets.normal_planet import NormalPlanet
 from planets.rock_planet import RockPlanet
+from planets.debris import Debris
+from planets.ice_planet import IcePlanet
+from planets.mid_planet import MidPlanet
 
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
@@ -31,6 +34,7 @@ class GameScreen(GameState):
     self.players = pygame.sprite.Group()
     self.planets = pygame.sprite.Group()
     self.shots = pygame.sprite.Group()
+    self.debris = pygame.sprite.Group()
 
     self.reset_game()
 
@@ -47,6 +51,7 @@ class GameScreen(GameState):
     self.players.empty()
     self.planets.empty()
     self.shots.empty()
+    self.debris.empty()
 
     self.all_sprites.add(self.player1, self.player2)
     self.players.add(self.player1, self.player2)
@@ -68,7 +73,7 @@ class GameScreen(GameState):
           self.shots.add(shot)
     
     if event.type == self.ADDPLANET:
-      planet_class = [NormalPlanet, RockPlanet]
+      planet_class = [NormalPlanet, RockPlanet, IcePlanet, MidPlanet]
       SelectedPlanetClass = random.choice(planet_class)
       new_planet = SelectedPlanetClass(self.screen_width, self.screen_height)
       self.all_sprites.add(new_planet)
@@ -83,25 +88,34 @@ class GameScreen(GameState):
     self.planets.update()
     self.shots.update()
 
+    self.debris.update(self.players)
+
     # 衝突判定
     shot_hit_planets = pygame.sprite.groupcollide(self.shots, self.planets, True, False)
     for shot, hit_planets_list in shot_hit_planets.items():
       for planet in hit_planets_list:
-        planet.take_damage(shot.damage)
-        if planet.hp <= 0:
-          if hasattr(shot, 'owner_player') and shot.owner_player is not None:
-            shot.owner_player.score += planet.score_value
-            print(f"{shot.owner_player.color}プレイヤーが{planet.score_value}スコア獲得！合計: {shot.owner_player.score}")
+        destroying_player = None
+        if hasattr(shot, 'owner_player') and shot.owner_player is not None:
+          destroying_player = shot.owner_player
+        planet_destroyed = planet.take_damage(shot.damage)
+
+        if planet_destroyed:
+          if destroying_player:
+            destroying_player.score += planet.score_value
           if self.explosion_sound:
             self.explosion_sound.play()
-            # planet.on_destroyed()
+          planet.on_destroyed(self, destroying_player)
 
+    for planet in list(self.planets):
+      if planet.hp <= 0:
+        self.all_sprites.remove(planet)
+        self.planets.remove(planet)
 
     # 当たり判定
     player_hit_planets = pygame.sprite.groupcollide(self.players, self.planets, False, True)
     for player, hit_planets_list in player_hit_planets.items():
       for planet in hit_planets_list:
-        if player.take_damage(): # プレイヤーのtake_damageメソッドを呼び出す
+        if player.take_damage():
           pass
     
     # ゲームオーバー判定

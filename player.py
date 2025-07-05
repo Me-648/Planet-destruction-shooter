@@ -14,11 +14,20 @@ class Player(pygame.sprite.Sprite):
 
     self.color = color
     self.speed = speed
+    self.original_speed = speed
 
+    # 減速効果用
+    self.is_slowed = False
+    self.slow_start_time = 0
+    # 5秒間だけ0.3倍の速度になる
+    self.slow_duration = 5000
+    self.slow_factor = 0.3
     self.score = 0
     self.hp = 3
+
+    # 無敵時間
     self.last_hit_time = 0
-    self.invicibility_duration = 2000
+    self.invicibility_duration = 1500
 
     self.keys_left = keys_left
     self.keys_right = keys_right
@@ -40,26 +49,36 @@ class Player(pygame.sprite.Sprite):
       self.shot_sound = pygame.mixer.Sound(shot_sound_path)
       self.shot_sound.set_volume(0.2)
     else:
-      print(f"Warning: Shot sound file not found at {shot_sound_path}")
+      print(f"発射音がないよ: {shot_sound_path}")
     if os.path.exists(player_hit_sound_path):
       self.hit_sound = pygame.mixer.Sound(player_hit_sound_path)
       self.hit_sound.set_volume(0.2)
     else:
-      print(f"効果音がないよ: {player_hit_sound_path}")
+      print(f"プレイヤーヒット音がないよ: {player_hit_sound_path}")
 
 
   def update(self, keys):
     if self.hp <= 0:
       return
+    
+    # 減速効果タイマー処理
+    if self.is_slowed:
+      current_time = pygame.time.get_ticks()
+      if current_time - self.slow_start_time > self.slow_duration:
+        self.is_slowed = False
+        print(f"プレイヤー{self.color}の減速効果が終了しました。")
+
+    # 移動速度計算
+    current_speed = self.speed * self.slow_factor if self.is_slowed else self.speed
 
     if keys[self.keys_left]:
-      self.rect.x -= self.speed
+      self.rect.x -= current_speed
     if keys[self.keys_right]:
-      self.rect.x += self.speed
+      self.rect.x += current_speed
     if keys[self.keys_up]:
-      self.rect.y -= self.speed
+      self.rect.y -= current_speed
     if keys[self.keys_down]:
-      self.rect.y += self.speed
+      self.rect.y += current_speed
 
     # 画面の端で停止
     if self.rect.left < 0:
@@ -86,7 +105,7 @@ class Player(pygame.sprite.Sprite):
     new_shot.owner_player = self
     return new_shot
   
-  def take_damage(self):
+  def take_damage(self, damage_amount=1):
     current_time = pygame.time.get_ticks()
     if current_time - self.last_hit_time > self.invicibility_duration:
       self.hp -= 1
@@ -99,3 +118,10 @@ class Player(pygame.sprite.Sprite):
 
       return True
     return False
+  
+  # プレイヤーを減速させるメソッド
+  def apply_slow_effect(self):
+    if not self.is_slowed:
+      self.is_slowed = True
+      self.slow_start_time = pygame.time.get_ticks()
+      print(f"プレイヤー{self.color}が減速効果を受けました！")
