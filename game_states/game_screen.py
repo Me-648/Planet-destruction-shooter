@@ -9,6 +9,8 @@ from planets.rock_planet import RockPlanet
 from planets.debris import Debris
 from planets.ice_planet import IcePlanet
 from planets.mid_planet import MidPlanet
+from planets.virus_planet import VirusPlanet
+from planets.penalty_planet import PenaltyPlanet
 
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
@@ -73,8 +75,26 @@ class GameScreen(GameState):
           self.shots.add(shot)
     
     if event.type == self.ADDPLANET:
-      planet_class = [NormalPlanet, RockPlanet, IcePlanet, MidPlanet]
-      SelectedPlanetClass = random.choice(planet_class)
+      # 惑星の種類と重みを定義
+      planet_types = [
+        NormalPlanet,
+        RockPlanet,
+        IcePlanet,
+        MidPlanet,
+        VirusPlanet,
+        PenaltyPlanet,
+      ]
+      planet_weights = [
+        40,
+        25,
+        20,
+        7,
+        3,
+        3,
+      ]
+      
+      SelectedPlanetClass = random.choices(planet_types, weights=planet_weights, k=1)[0]
+
       new_planet = SelectedPlanetClass(self.screen_width, self.screen_height)
       self.all_sprites.add(new_planet)
       self.planets.add(new_planet)
@@ -102,6 +122,9 @@ class GameScreen(GameState):
         if planet_destroyed:
           if destroying_player:
             destroying_player.score += planet.score_value
+            if destroying_player.score < 0:
+              destroying_player.score = 0
+
           if self.explosion_sound:
             self.explosion_sound.play()
           planet.on_destroyed(self, destroying_player)

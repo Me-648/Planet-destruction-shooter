@@ -33,7 +33,7 @@ class HowToPlayScreen(GameState):
       "プレイヤー1: A/D/W/Sキーで移動, SPACEキーでショット",
       "プレイヤー2: 矢印キーで移動, ENTERキーでショット",
       "宙から降ってくる惑星を破壊しましょう！",
-      "茶色の惑星は1発、灰色の惑星は3発で破壊できます。"
+      "様々な惑星が登場します！がんばって！！"
     ]
         
     y_offset = how_to_play_title_rect.bottom + 50

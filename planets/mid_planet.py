@@ -10,6 +10,6 @@ class MidPlanet(BasePlanet):
     hp = 30
     score_value = 150
 
-    image_path = 'mid_planet.png'
+    image_path = 'planet_mid.png'
 
     super().__init__(screen_width, screen_height, size, color, hp, speed, score_value, image_path)
