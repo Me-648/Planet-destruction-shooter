@@ -12,7 +12,7 @@ from planets.mid_planet import MidPlanet
 from planets.virus_planet import VirusPlanet
 from planets.penalty_planet import PenaltyPlanet
 
-BLUE = (0, 0, 255)
+RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 GRAY = (128, 128, 128)
 
@@ -20,6 +20,10 @@ class GameScreen(GameState):
   def __init__(self, screen, font, small_font, game_manager):
     super().__init__(screen, font, small_font, game_manager)
     self.screen_width, self.screen_height = self.screen.get_size()
+
+    # 共通背景のロード
+    background_path = os.path.join("assets", "images", "background.png")
+    self.load_scrolling_background(background_path, speed=0.5)
 
     # 惑星破壊音のロード
     self.explosion_sound = None
@@ -41,7 +45,7 @@ class GameScreen(GameState):
     self.reset_game()
 
   def reset_game(self):
-    self.player1 = Player(self.screen_width // 4, self.screen_height - 80, BLUE,
+    self.player1 = Player(self.screen_width // 4, self.screen_height - 80, RED,
                             pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s,
                             10, self.screen_width, self.screen_height)
     self.player2 = Player(self.screen_width * 3 // 4, self.screen_height - 80, GREEN,
@@ -110,6 +114,8 @@ class GameScreen(GameState):
 
     self.debris.update(self.players)
 
+    self.update_background()
+
     # 衝突判定
     shot_hit_planets = pygame.sprite.groupcollide(self.shots, self.planets, True, False)
     for shot, hit_planets_list in shot_hit_planets.items():
@@ -154,11 +160,12 @@ class GameScreen(GameState):
       self.player2.kill()
   
   def draw(self):
-    self.screen.fill(GRAY)
+    self.draw_background()
+
     self.all_sprites.draw(self.screen)
 
-    player1_score_text = self.small_font.render(f"P1スコア: {self.player1.score}", True, BLUE)
-    player1_hp_text = self.small_font.render(f"P1HP: {self.player1.hp}", True, BLUE)
+    player1_score_text = self.small_font.render(f"P1スコア: {self.player1.score}", True, RED)
+    player1_hp_text = self.small_font.render(f"P1HP: {self.player1.hp}", True, RED)
     self.screen.blit(player1_score_text, (10, 10))
     self.screen.blit(player1_hp_text, (10, 60))
     

@@ -1,4 +1,5 @@
 import pygame
+import os
 from game_states.game_state import GameState
 
 WHITE = (255, 255, 255)
@@ -9,9 +10,14 @@ GRAY = (128, 128, 128)
 class TitleScreen(GameState):
   def __init__(self, screen, font, small_font, game_manager):
     super().__init__(screen, font, small_font, game_manager)
-    self.screen_width, self.screen_height = self.screen.get_size()
+
+    background_path = os.path.join('assets', 'images', 'background.png')
+    self.load_scrolling_background(background_path, speed=0.2)
+
     self.play_button_rect = pygame.Rect(self.screen_width // 2 - 100, self.screen_height // 2, 200, 50)
     self.how_to_play_button_rect = pygame.Rect(self.screen_width // 2 - 100, self.screen_height // 2 + 70, 200, 50)
+
+
 
   def handle_event(self, event):
     if event.type == pygame.MOUSEBUTTONDOWN:
@@ -23,10 +29,11 @@ class TitleScreen(GameState):
           self.game_manager.change_state("how_to_play") # GameManagerに状態変更を依頼
 
   def update(self):
-    pass
+    self.update_background()
 
   def draw(self):
-    self.screen.fill(GRAY)
+    self.draw_background()
+
     # タイトルテキスト
     title_text = self.font.render("惑星破壊シューティングⅡ", True, WHITE)
     title_rect = title_text.get_rect(center=(self.screen_width // 2, self.screen_height // 4))

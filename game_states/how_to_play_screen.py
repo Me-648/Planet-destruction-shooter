@@ -1,4 +1,5 @@
 import pygame
+import os
 from game_states.game_state import GameState
 
 WHITE = (255, 255, 255)
@@ -11,6 +12,10 @@ class HowToPlayScreen(GameState):
     self.screen_width, self.screen_height = self.screen.get_size()
     self.back_button_rect = pygame.Rect(self.screen_width // 2 - 100, self.screen_height - 100, 200, 50)
 
+    # 背景画像をロード
+    background_path = os.path.join('assets', 'images', 'background.png')
+    self.load_scrolling_background(background_path, speed=0.2)
+
   def handle_event(self, event):
     if event.type == pygame.MOUSEBUTTONDOWN:
       if event.button == 1:
@@ -19,10 +24,10 @@ class HowToPlayScreen(GameState):
           self.game_manager.change_state("title") # GameManagerに状態変更を依頼
         
   def update(self):
-    pass
+    self.update_background()
 
   def draw(self):
-    self.screen.fill(GRAY)
+    self.draw_background()
 
     # 遊び方説明画面の描画
     how_to_play_title_text = self.font.render("遊び方", True, WHITE)

@@ -15,9 +15,7 @@ pygame.mixer.init()
 # 初期解像度
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 900
-# フルスクリーンに設定
-screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-SCREEN_WIDTH, SCREEN_HEIGHT = screen.get_size()
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 pygame.display.set_caption("惑星破壊シューティングII (準備中)")
 
@@ -29,7 +27,7 @@ GAME_STATE_GAME_OVER = "game_over" #ゲームオーバー画面
 
 class GameManager:
   def __init__(self):
-    self.screen = screen
+    self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     self.screen_width, self.screen_height = self.screen.get_size()
 
     # フォント設定

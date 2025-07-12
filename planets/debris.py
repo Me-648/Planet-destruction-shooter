@@ -8,7 +8,7 @@ class Debris(pygame.sprite.Sprite):
   def __init__(self, x, y, screen_width, screen_height):
     super().__init__()
     image_path = os.path.join('assets', 'images', 'rock_debris.png')
-    size = random.randint(20, 30)
+    size = random.randint(30, 40)
     color = (150, 150, 150)
 
     self.screen_width = screen_width

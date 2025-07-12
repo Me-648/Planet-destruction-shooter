@@ -1,8 +1,10 @@
 import pygame
+import os
 from game_states.game_state import GameState
 
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
+RED = (255, 0, 0)
 GRAY = (128, 128, 128)
 
 class GameOverScreen(GameState):
@@ -10,17 +12,26 @@ class GameOverScreen(GameState):
     super().__init__(screen, font, small_font, game_manager)
     self.screen_width, self.screen_height = self.screen.get_size()
 
-    # ボタンの短形を定義(サイズを大きめに)
-    button_width = 280
-    button_height = 60
+    background_path = os.path.join('assets', 'images', 'background.png') 
+    self.load_static_background_cover(background_path)
+
+    # ボタンの定義
+    button_width_ratio = 0.3
+    button_height_ratio = 0.1
+    button_width = int(self.screen_width * button_width_ratio)
+    button_height = int(self.screen_height * button_height_ratio)
 
     # 最終スコア表示用
     self.player1_final_score = 0
     self.player2_final_score = 0
 
+    # ボタンの短形を定義
     self.restart_button_rect = pygame.Rect(0, 0, button_width, button_height)
     self.title_button_rect = pygame.Rect(0, 0, button_width, button_height)
     self.exit_button_rect = pygame.Rect(0, 0, button_width, button_height)
+
+    # 中央基準
+    self.middle_of_screen_y = self.screen_height // 2
 
   # ゲームオーバー画面遷移メソッド
   def set_final_scores(self, p1_score, p2_score):
@@ -46,7 +57,7 @@ class GameOverScreen(GameState):
     pass
 
   def draw(self):
-    self.screen.fill(GRAY)
+    self.draw_static_background()
 
     # ゲームオーバータイトル
     game_over_text = self.font.render("★全滅しました★", True, WHITE)
@@ -54,7 +65,7 @@ class GameOverScreen(GameState):
     self.screen.blit(game_over_text, game_over_rect)
 
     # 最終スコア表示
-    p1_final_score_text = self.small_font.render(f"プレイヤー1 スコア: {self.player1_final_score}", True, BLUE)
+    p1_final_score_text = self.small_font.render(f"プレイヤー1 スコア: {self.player1_final_score}", True, RED)
     p1_final_score_rect = p1_final_score_text.get_rect(center=(self.screen_width // 2, game_over_rect.bottom + 50))
     self.screen.blit(p1_final_score_text, p1_final_score_rect)
 
@@ -78,21 +89,21 @@ class GameOverScreen(GameState):
 
     # ボタン描画
     # リスタートボタン
-    self.restart_button_rect.center = (self.screen_width // 2, winner_text_rect.bottom + 100)
+    self.restart_button_rect.center = (self.screen_width // 2, winner_text_rect.bottom + int(self.screen_height * 0.1))
     pygame.draw.rect(self.screen, BLUE, self.restart_button_rect)
     restart_text = self.small_font.render("もう一度play", True, WHITE)
     restart_text_rect = restart_text.get_rect(center=self.restart_button_rect.center)
     self.screen.blit(restart_text, restart_text_rect)
 
     # タイトルへ戻るボタン
-    self.title_button_rect.center = (self.screen_width // 2, self.restart_button_rect.bottom + 50)
+    self.title_button_rect.center = (self.screen_width // 2, self.restart_button_rect.bottom + int(self.screen_height * 0.05))
     pygame.draw.rect(self.screen, (255, 165, 0), self.title_button_rect)
     title_text = self.small_font.render("タイトルへ", True, WHITE)
     title_text_rect = title_text.get_rect(center=self.title_button_rect.center)
     self.screen.blit(title_text, title_text_rect)
 
     # 終了ボタン
-    self.exit_button_rect.center = (self.screen_width // 2, self.title_button_rect.bottom + 50)
+    self.exit_button_rect.center = (self.screen_width // 2, self.title_button_rect.bottom + int(self.screen_height * 0.05))
     pygame.draw.rect(self.screen, (200, 0, 0), self.exit_button_rect)
     exit_text = self.small_font.render("終了", True, WHITE)
     exit_text_rect = exit_text.get_rect(center=self.exit_button_rect.center)
