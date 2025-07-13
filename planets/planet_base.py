@@ -26,7 +26,7 @@ class BasePlanet(pygame.sprite.Sprite):
 
     self.destroyed = False
 
-  def update(self):
+  def update(self, game_screen=None):
     self.rect.y += self.speed
 
     # 画面下まで行ったら消える

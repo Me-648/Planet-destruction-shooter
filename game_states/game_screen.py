@@ -3,7 +3,7 @@ import random
 import os
 from game_states.game_state import GameState
 from player import Player
-from shot import Shot
+from shots.shot import Shot
 from planets.normal_planet import NormalPlanet
 from planets.rock_planet import RockPlanet
 from planets.debris import Debris
@@ -11,6 +11,8 @@ from planets.ice_planet import IcePlanet
 from planets.mid_planet import MidPlanet
 from planets.virus_planet import VirusPlanet
 from planets.penalty_planet import PenaltyPlanet
+from planets.ufo_planet import UFOPlanet
+from shots.enemy_shot import EnemyShot
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -34,6 +36,8 @@ class GameScreen(GameState):
     else:
       print(f"惑星破壊音がないよ: {explosion_sound_path}")
 
+    self.enemy_shots = pygame.sprite.Group()
+
     self.ADDPLANET = pygame.USEREVENT + 1
 
     self.all_sprites = pygame.sprite.Group()
@@ -47,16 +51,17 @@ class GameScreen(GameState):
   def reset_game(self):
     self.player1 = Player(self.screen_width // 4, self.screen_height - 80, RED,
                             pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s,
-                            10, self.screen_width, self.screen_height)
+                            10, self.screen_width, self.screen_height, player_id=1)
     self.player2 = Player(self.screen_width * 3 // 4, self.screen_height - 80, GREEN,
                             pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN,
-                            10, self.screen_width, self.screen_height)
+                            10, self.screen_width, self.screen_height, player_id=2)
 
     # 既存のグループをクリアしてから新しいプレイヤーを追加
     self.all_sprites.empty()
     self.players.empty()
     self.planets.empty()
     self.shots.empty()
+    self.enemy_shots.empty()
     self.debris.empty()
 
     self.all_sprites.add(self.player1, self.player2)
@@ -87,13 +92,15 @@ class GameScreen(GameState):
         MidPlanet,
         VirusPlanet,
         PenaltyPlanet,
+        UFOPlanet,
       ]
       planet_weights = [
         40,
-        25,
         20,
-        7,
+        20,
+        8,
         3,
+        4,
         3,
       ]
       
@@ -109,8 +116,11 @@ class GameScreen(GameState):
     self.player1.update(keys)
     self.player2.update(keys)
 
-    self.planets.update()
+    for planet in self.planets:
+      planet.update(self)
+
     self.shots.update()
+    self.enemy_shots.update()
 
     self.debris.update(self.players)
 
@@ -135,10 +145,13 @@ class GameScreen(GameState):
             self.explosion_sound.play()
           planet.on_destroyed(self, destroying_player)
 
-    for planet in list(self.planets):
-      if planet.hp <= 0:
-        self.all_sprites.remove(planet)
-        self.planets.remove(planet)
+    # 敵のショットがプレイヤーに当たる衝突判定
+    enemy_shot_hit_players = pygame.sprite.groupcollide(self.enemy_shots, self.players, True, False)
+    for enemy_shot, hit_players_list in enemy_shot_hit_players.items():
+      for player in hit_players_list:
+        if player.is_alive(): # 生存しているプレイヤーにのみダメージを与える
+          player.take_damage(enemy_shot.damage) # 敵の弾のダメージを適用
+          print(f"プレイヤー{player.player_id}が敵の弾と衝突！HPが{player.hp}になりました。")
 
     # 当たり判定
     player_hit_planets = pygame.sprite.groupcollide(self.players, self.planets, False, True)

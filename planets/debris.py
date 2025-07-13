@@ -42,7 +42,8 @@ class Debris(pygame.sprite.Sprite):
     self.rect.y += self.vy
 
     # 画面外に出たら消滅
-    if not (0 <= self.rect.x <= self.screen_width and 0 <= self.rect.y <= self.screen_height):
+    if (self.rect.right < 0 or self.rect.left > self.screen_width or
+    self.rect.bottom < 0 or self.rect.top > self.screen_height):
       self.kill()
 
     # プレイヤーとの衝突判定

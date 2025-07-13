@@ -25,7 +25,7 @@ class PenaltyPlanet(BasePlanet):
     self.angle = 0
     self.rotation_speed = random.choice([-3, -2, 2, 3])
 
-  def update(self):
+  def update(self, game_acreen=None):
     super().update()
 
     self.angle = (self.angle + self.rotation_speed) % 360
