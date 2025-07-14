@@ -1,7 +1,7 @@
 import pygame
 
 class Shot(pygame.sprite.Sprite):
-  def __init__(self, x, y, color, owner_player=None):
+  def __init__(self, x, y, color, owner_player=None, damage=1):
     super().__init__()
 
     self.image = pygame.Surface([5, 15]) # ショットの見た目を細長い四角形にする
@@ -12,7 +12,7 @@ class Shot(pygame.sprite.Sprite):
     self.rect.bottom = y # ショットのY座標をプレイヤーの上端に合わせる
 
     self.speed = -15 # ショットの速度
-    self.damage = 1 # ショットのダメージ
+    self.damage = damage # ショットのダメージ
 
     self.owner_player = owner_player
 

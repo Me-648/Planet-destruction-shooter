@@ -13,6 +13,8 @@ from planets.virus_planet import VirusPlanet
 from planets.penalty_planet import PenaltyPlanet
 from planets.ufo_planet import UFOPlanet
 from shots.enemy_shot import EnemyShot
+from items.score_item import ScoreItem
+from items.power_shot_item import PowerShotItem
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -39,12 +41,14 @@ class GameScreen(GameState):
     self.enemy_shots = pygame.sprite.Group()
 
     self.ADDPLANET = pygame.USEREVENT + 1
+    self.ADDITEM = pygame.USEREVENT + 2
 
     self.all_sprites = pygame.sprite.Group()
     self.players = pygame.sprite.Group()
     self.planets = pygame.sprite.Group()
     self.shots = pygame.sprite.Group()
     self.debris = pygame.sprite.Group()
+    self.items = pygame.sprite.Group()
 
     self.reset_game()
 
@@ -63,12 +67,15 @@ class GameScreen(GameState):
     self.shots.empty()
     self.enemy_shots.empty()
     self.debris.empty()
+    self.items.empty()
 
     self.all_sprites.add(self.player1, self.player2)
     self.players.add(self.player1, self.player2)
 
     # 隕石を生成
     pygame.time.set_timer(self.ADDPLANET, 400)
+    # アイテムを生成
+    pygame.time.set_timer(self.ADDITEM, 5000)
 
   def handle_event(self, event):
     if event.type == pygame.KEYDOWN:
@@ -109,6 +116,21 @@ class GameScreen(GameState):
       new_planet = SelectedPlanetClass(self.screen_width, self.screen_height)
       self.all_sprites.add(new_planet)
       self.planets.add(new_planet)
+
+    if event.type == self.ADDITEM:
+      item_types = [
+        ScoreItem, 
+        PowerShotItem,
+      ]
+      item_weights = [
+        70,
+        30,
+      ]
+      
+      SelectedItemClass = random.choices(item_types, weights=item_weights, k=1)[0]
+      new_item = SelectedItemClass(self.screen_width, self.screen_height)
+      self.all_sprites.add(new_item)
+      self.items.add(new_item)
   
   def update(self):
     keys = pygame.key.get_pressed()
@@ -121,6 +143,7 @@ class GameScreen(GameState):
 
     self.shots.update()
     self.enemy_shots.update()
+    self.items.update()
 
     self.debris.update(self.players)
 
@@ -159,6 +182,14 @@ class GameScreen(GameState):
       for planet in hit_planets_list:
         if player.take_damage():
           pass
+
+    # プレイヤーとアイテムの衝突判定
+    player_hit_items = pygame.sprite.groupcollide(self.players, self.items, False, True)
+    for player, hit_items_list in player_hit_items.items():
+      for item in hit_items_list:
+        if player.is_alive():
+          item.apply_effect(player, self)
+          self.all_sprites.remove(item)
     
     # ゲームオーバー判定
     p1_game_over = (self.player1.hp <= 0)

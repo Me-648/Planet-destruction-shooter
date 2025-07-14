@@ -67,6 +67,13 @@ class Player(pygame.sprite.Sprite):
     else:
       print(f"プレイヤーヒット音がないよ: {player_hit_sound_path}")
 
+    
+    # パワーショット(アイテム)関連のプロパティ
+    self.is_power_shot_active = False
+    self.is_power_shot_start_time = 0
+    self.power_shot_duration = 0
+    self.current_damage_multiplier = 1
+
 
   def update(self, keys):
     if self.hp <= 0:
@@ -113,7 +120,18 @@ class Player(pygame.sprite.Sprite):
       self.last_shot_time = current_time
       if self.shot_sound:
         self.shot_sound.play()
-      return Shot(self.rect.centerx, self.rect.top, self.color, owner_player=self)
+      
+      # パワーショット(アイテム)が有効な場合は倍率を適用
+      damage = 1
+      if self.is_power_shot_active:
+        elapsed = current_time - self.is_power_shot_start_time
+        if elapsed < self.power_shot_duration:
+          damage = self.current_damage_multiplier
+        else:
+          self.is_power_shot_active = False
+          self.current_damage_multiplier = 1
+
+      return Shot(self.rect.centerx, self.rect.top, self.color, owner_player=self, damage=damage)
     return None
   
   def take_damage(self, damage_amount=1):
@@ -147,3 +165,11 @@ class Player(pygame.sprite.Sprite):
   
   def is_alive(self):
     return self.hp > 0
+  
+  # パワーショット(アイテム)効果を適用するメソッド
+  def apply_power_shot(self, multiplier, duration):
+    self.is_power_shot_active = True
+    self.is_power_shot_start_time = pygame.time.get_ticks()
+    self.power_shot_duration = duration
+    self.current_damage_multiplier = multiplier
+    print(f"プレイヤー{self.player_id}にパワーショット効果が適用されました！")
