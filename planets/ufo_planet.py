@@ -20,10 +20,25 @@ class UFOPlanet(BasePlanet):
     self.attack_interval = random.randint(40, 120)
     self.attack_timer = 0
     self.shot_speed = 4
+
+    # ジグザグ移動用プロパティ  
+    self.zigzag_speed = random.uniform(0.5, 2)
+    self.zigzag_direction = random.choice([-1, 1])
+    self.zigzag_range = 150
+    self.initial_x = self.rect.x
   
   def update(self, game_screen_instance):
     super().update()
     self.attack_timer += 1
+
+    self.rect.x += self.zigzag_direction * self.zigzag_speed
+
+    if self.rect.x > self.initial_x + self.zigzag_range:
+      self.zigzag_direction = -1
+    elif self.rect.x < self.initial_x - self.zigzag_range:
+      self.zigzag_direction = 1
+
+    self.rect.x = max(0, min(self.rect.x, self.screen_width - self.rect.width))
 
     if self.rect.top < self.screen_height and self.rect.bottom > 0:
       if self.attack_timer >= self.attack_interval:
