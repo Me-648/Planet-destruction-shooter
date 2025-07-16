@@ -12,7 +12,7 @@ class UFOPlanet(BasePlanet):
     hp = 2
     score_value = 200
 
-    image_path = 'planet_ufo.png'
+    image_path = 'planets/planet_ufo.png'
 
     super().__init__(screen_width, screen_height, size, color, hp, speed, score_value, image_path)
 
@@ -24,8 +24,15 @@ class UFOPlanet(BasePlanet):
     # ジグザグ移動用プロパティ  
     self.zigzag_speed = random.uniform(0.5, 2)
     self.zigzag_direction = random.choice([-1, 1])
-    self.zigzag_range = 150
+
+    margin = 150
+    self.rect.x = random.randint(margin, screen_width - size - margin)
     self.initial_x = self.rect.x
+
+    left_margin = self.initial_x
+    right_margin = screen_width - (self.initial_x + size)
+    self.zigzag_range = min(left_margin, right_margin, 150)
+
   
   def update(self, game_screen_instance):
     super().update()

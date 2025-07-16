@@ -9,7 +9,7 @@ class IcePlanet(BasePlanet):
     hp = 2
     score_value = 40
 
-    image_path = 'planet_ice.png'
+    image_path = 'planets/planet_ice.png'
     
     super().__init__(screen_width, screen_height, size, color, hp, speed, score_value, image_path)
   

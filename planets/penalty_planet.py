@@ -12,9 +12,9 @@ class PenaltyPlanet(BasePlanet):
     score_value = -50
 
     image_paths = [
-      'planet_penalty_1.png',
-      'planet_penalty_2.png',
-      'planet_penalty_3.png',
+      'planets/planet_penalty_1.png',
+      'planets/planet_penalty_2.png',
+      'planets/planet_penalty_3.png',
     ]
 
     selected_image_path = random.choice(image_paths)

@@ -15,6 +15,7 @@ from planets.ufo_planet import UFOPlanet
 from shots.enemy_shot import EnemyShot
 from items.score_item import ScoreItem
 from items.power_shot_item import PowerShotItem
+from items.heal_item import HealItem
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -37,6 +38,15 @@ class GameScreen(GameState):
       self.explosion_sound.set_volume(0.1)
     else:
       print(f"惑星破壊音がないよ: {explosion_sound_path}")
+
+    # アイテム取得音のロード 
+    self.item_get_sound = None
+    item_get_sound_path = os.path.join('assets', 'sounds', 'item_get.mp3')
+    if os.path.exists(item_get_sound_path):
+      self.item_get_sound = pygame.mixer.Sound(item_get_sound_path)
+      self.item_get_sound.set_volume(0.1)
+    else:
+      print(f"アイテム取得音がないよ: {item_get_sound_path}")
 
     self.enemy_shots = pygame.sprite.Group()
 
@@ -118,13 +128,16 @@ class GameScreen(GameState):
       self.planets.add(new_planet)
 
     if event.type == self.ADDITEM:
+      # アイテムの種類と重みを定義
       item_types = [
         ScoreItem, 
         PowerShotItem,
+        HealItem,
       ]
       item_weights = [
-        70,
-        30,
+        60,
+        25,
+        15,
       ]
       
       SelectedItemClass = random.choices(item_types, weights=item_weights, k=1)[0]
@@ -190,6 +203,8 @@ class GameScreen(GameState):
         if player.is_alive():
           item.apply_effect(player, self)
           self.all_sprites.remove(item)
+          if self.item_get_sound:
+            self.item_get_sound.play()
     
     # ゲームオーバー判定
     p1_game_over = (self.player1.hp <= 0)

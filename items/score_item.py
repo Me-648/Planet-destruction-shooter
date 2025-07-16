@@ -5,7 +5,7 @@ class ScoreItem(BaseItem):
   def __init__(self, screen_width, screen_height):
 
     size = 40
-    image_path = 'item_score.png'
+    image_path = 'items/item_score.png'
 
     super().__init__(screen_width, screen_height, size, image_path)
 

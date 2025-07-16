@@ -3,7 +3,7 @@ from .item_base import BaseItem
 class PowerShotItem(BaseItem):
   def __init__(self, screen_width, screen_height):
     size = 40
-    image_path = 'item_powershot.png'
+    image_path = 'items/item_powershot.png'
     super().__init__(screen_width, screen_height, size, image_path)
 
     # 効果時間(ミリ秒)

@@ -10,7 +10,7 @@ class RockPlanet(BasePlanet):
     hp = 3
 
     score_value = 30
-    image_path = 'planet_rock.png'
+    image_path = 'planets/planet_rock.png'
     super().__init__(screen_width, screen_height, size, color, hp, speed, score_value, image_path)
   
   def on_destroyed(self, game_screen_instance, destroying_player):
