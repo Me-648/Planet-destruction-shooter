@@ -17,6 +17,7 @@ from items.score_item import ScoreItem
 from items.power_shot_item import PowerShotItem
 from items.heal_item import HealItem
 from items.barrier_item import BarrierItem
+from items.triple_shot_item import TripleShotItem
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -135,8 +136,10 @@ class GameScreen(GameState):
         PowerShotItem,
         HealItem,
         BarrierItem,
+        TripleShotItem,
       ]
       item_weights = [
+        0,
         0,
         0,
         0,

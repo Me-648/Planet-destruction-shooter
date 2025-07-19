@@ -1,5 +1,6 @@
 import pygame
 import os
+import math
 from shots.shot import Shot
 
 class Player(pygame.sprite.Sprite):
@@ -69,7 +70,6 @@ class Player(pygame.sprite.Sprite):
       self.hit_sound.set_volume(0.2)
     else:
       print(f"プレイヤーヒット音がないよ: {player_hit_sound_path}")
-
     
     # パワーショット(アイテム)関連のプロパティ
     self.is_power_shot_active = False
@@ -95,6 +95,12 @@ class Player(pygame.sprite.Sprite):
     else:
       print(f"バリアエフェクト画像がないよ: {barrier_image_path}")
 
+    # 三方向ショット関連のプロパティ
+    self.is_triple_shot_active = False
+    self.triple_shot_start_time = 0
+    self.triple_shot_duration = 0
+    self.triple_shot_angle_offset = 15
+
   def update(self, keys):
     if self.hp <= 0:
       return
@@ -106,7 +112,21 @@ class Player(pygame.sprite.Sprite):
       current_time = pygame.time.get_ticks()
       if current_time - self.slow_start_time > self.slow_duration:
         self.is_slowed = False
+        self.speed = self.original_speed
         print(f"プレイヤー{self.player_id}の減速効果が終了しました。")
+
+    # パワーショットタイマー処理
+    if self.is_power_shot_active:
+      if current_time - self.power_shot_start_time > self.power_shot_duration:
+        self.is_power_shot_active = False
+        self.current_damage_multiplier = 1
+        print(f"プレイヤー{self.player_id}のパワーショット効果が終了しました。")
+
+    # 三方向ショットタイマー処理
+    if self.is_triple_shot_active:
+      if current_time - self.triple_shot_start_time > self.triple_shot_duration:
+        self.is_triple_shot_active = False
+        print(f"プレイヤー{self.player_id}の三方向ショット効果が終了しました。")
 
     # 点滅処理
     if current_time - self.last_hit_time < self.invicibility_duration:
@@ -151,7 +171,7 @@ class Player(pygame.sprite.Sprite):
 
   def shoot(self):
     if self.hp <= 0:
-      return None
+      return []
     
     current_time = pygame.time.get_ticks()
     if current_time - self.last_shot_time > self.shoot_delay:
@@ -159,18 +179,51 @@ class Player(pygame.sprite.Sprite):
       if self.shot_sound:
         self.shot_sound.play()
       
-      # パワーショット(アイテム)が有効な場合は倍率を適用
-      damage = 1
-      if self.is_power_shot_active:
-        elapsed = current_time - self.is_power_shot_start_time
-        if elapsed < self.power_shot_duration:
-          damage = self.current_damage_multiplier
-        else:
-          self.is_power_shot_active = False
-          self.current_damage_multiplier = 1
+      damage = 1 * self.current_damage_multiplier
+      shots_to_fire = []
 
-      return Shot(self.rect.centerx, self.rect.top, self.color, owner_player=self, damage=damage)
-    return None
+      shot_type_to_use = "normal"
+      if self.is_power_shot_active:
+        shot_type_to_use = "power"
+      if self.is_triple_shot_active:
+        shot_type_to_use = "triple"
+
+      # ショットの基準速度
+      base_shot_speed = -15
+
+      if self.is_triple_shot_active:
+        # 三方向ショットを生成
+        angles_deg = [self.triple_shot_angle_offset, 0, -self.triple_shot_angle_offset]
+
+        for angle_deg in angles_deg:
+          angle_rad = math.radians(angle_deg)
+          
+          total_shot_speed = abs(base_shot_speed)
+          
+          current_vy = -total_shot_speed * math.cos(angle_rad)
+          current_vx = total_shot_speed * math.sin(angle_rad)
+
+          offset_x = 0
+          offset_y = 0
+          # 発射位置の調整 (見た目を自然にするため)
+          if angle_deg > 0: # 右斜め
+              offset_x = 10
+              offset_y = 5
+          elif angle_deg < 0: # 左斜め
+              offset_x = -10
+              offset_y = 5
+
+          shots_to_fire.append(Shot(self.rect.centerx + offset_x, self.rect.top + offset_y, 
+                                     self.color, owner_player=self, damage=damage, 
+                                     shot_type=shot_type_to_use, vx=current_vx, vy=current_vy))
+      else:
+        # 通常またはパワーショットを生成 (vx=0, vy=base_shot_speed で垂直に飛ぶ)
+        shots_to_fire.append(Shot(self.rect.centerx, self.rect.top, self.color, 
+                                   owner_player=self, damage=damage, 
+                                   shot_type=shot_type_to_use, vx=0, vy=base_shot_speed))
+      
+      return shots_to_fire
+    return []
   
   def take_damage(self, damage_amount=1):
     current_time = pygame.time.get_ticks()
@@ -200,11 +253,12 @@ class Player(pygame.sprite.Sprite):
       self.score = 0
   
   # プレイヤーを減速させるメソッド
-  def apply_slow_effect(self):
+  def apply_slow_effect(self, duration_ms=5000):
     if not self.is_slowed:
       self.is_slowed = True
       self.slow_start_time = pygame.time.get_ticks()
-      print(f"プレイヤー{self.color}が減速効果を受けました！")
+      self.slow_duration = duration_ms
+      print(f"プレイヤー{self.player_id}が減速効果を受けました！")
   
   def is_alive(self):
     return self.hp > 0
@@ -212,7 +266,7 @@ class Player(pygame.sprite.Sprite):
   # パワーショット(アイテム)効果を適用するメソッド
   def apply_power_shot(self, multiplier, duration):
     self.is_power_shot_active = True
-    self.is_power_shot_start_time = pygame.time.get_ticks()
+    self.power_shot_start_time = pygame.time.get_ticks()
     self.power_shot_duration = duration
     self.current_damage_multiplier = multiplier
     print(f"プレイヤー{self.player_id}にパワーショット効果が適用されました！")
@@ -220,10 +274,19 @@ class Player(pygame.sprite.Sprite):
   # バリア関連のメソッド
   def activate_barrier(self):
     self.has_barrier = True
-    # バリアアクティベート時に確実に位置を更新
     if self.barrier_effect_rect:
       self.barrier_effect_rect.center = self.rect.center
     print(f"プレイヤー{self.player_id}にバリアを展開しました！")
   
   def has_active_barrier(self):
     return self.has_barrier
+  
+  # 三方向ショットをアクティブにするメソッド
+  def activate_triple_shot(self, duration_ms):
+    self.is_triple_shot_active = True
+    self.triple_shot_start_time = pygame.time.get_ticks()
+    self.triple_shot_duration = duration_ms
+    print(f"プレイヤー{self.player_id}に三方向ショット効果が適用されました！")
+
+  def has_active_triple_shot(self):
+    return self.is_triple_shot_active

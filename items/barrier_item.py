@@ -1,4 +1,3 @@
-import pygame
 from .item_base import BaseItem
 
 class BarrierItem(BaseItem):

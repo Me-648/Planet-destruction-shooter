@@ -7,7 +7,7 @@ class PowerShotItem(BaseItem):
     super().__init__(screen_width, screen_height, size, image_path)
 
     # 効果時間(ミリ秒)
-    self.duration = 5000
+    self.duration = 10000
     # ダメージ倍率
     self.damage_multiplier = 5
 
