@@ -2,8 +2,6 @@ import pygame
 import random
 import os
 
-from player import Player
-
 class Debris(pygame.sprite.Sprite):
   def __init__(self, x, y, screen_width, screen_height):
     super().__init__()
@@ -34,20 +32,11 @@ class Debris(pygame.sprite.Sprite):
     self.vx = speed * pygame.math.Vector2(1, 0).rotate(angle).x
     self.vy = speed * pygame.math.Vector2(1, 0).rotate(angle).y
 
-    self.screen_width = screen_width
-    self.screen_height = screen_height
-
-  def update(self, players_group):
+  def update(self):
     self.rect.x += self.vx
     self.rect.y += self.vy
 
     # 画面外に出たら消滅
     if (self.rect.right < 0 or self.rect.left > self.screen_width or
-    self.rect.bottom < 0 or self.rect.top > self.screen_height):
+        self.rect.bottom < 0 or self.rect.top > self.screen_height):
       self.kill()
-
-    # プレイヤーとの衝突判定
-    hit_players = pygame.sprite.spritecollide(self, players_group, False)
-    for player in hit_players:
-      if player.take_damage():
-        self.kill()

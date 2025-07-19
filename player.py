@@ -12,6 +12,8 @@ class Player(pygame.sprite.Sprite):
     self.rect.x = x
     self.rect.y = y
 
+    self.original_image = self.image.copy()
+
     self.color = color
     self.speed = speed
     self.original_speed = speed
@@ -22,12 +24,18 @@ class Player(pygame.sprite.Sprite):
     # 5秒間だけ0.3倍の速度になる
     self.slow_duration = 5000
     self.slow_factor = 0.3
+
     self.score = 0
     self.hp = 3
+    self.max_hp = 3
 
     # 無敵時間
     self.last_hit_time = 0
     self.invicibility_duration = 1500
+    self.is_invincible_blinking = False
+    self.blink_interval = 100
+    self.last_blink_time = 0
+    self.is_visible = True
 
     self.keys_left = keys_left
     self.keys_right = keys_right
@@ -42,11 +50,6 @@ class Player(pygame.sprite.Sprite):
 
     self.shoot_delay = 20
     self.last_shot_time = 0
-
-    # スロー効果の管理
-    self.is_slowed = False
-    self.slow_timer = 0
-    self.original_speed = speed # 元のスピードを保持
 
     # プレイヤーID
     self.player_id = player_id
@@ -70,14 +73,33 @@ class Player(pygame.sprite.Sprite):
     
     # パワーショット(アイテム)関連のプロパティ
     self.is_power_shot_active = False
-    self.is_power_shot_start_time = 0
+    self.power_shot_start_time = 0
     self.power_shot_duration = 0
     self.current_damage_multiplier = 1
 
+    # バリア関連のプロパティ
+    self.has_barrier = False
+
+    self.barrier_effect_image = None
+    self.barrier_effect_rect = None
+    barrier_image_path = os.path.join('assets', 'images', 'items', 'item_barrier.png')
+    if os.path.exists(barrier_image_path):
+      original_barrier_image = pygame.image.load(barrier_image_path).convert_alpha()
+      effect_size = int(self.rect.width * 1.5)
+      self.barrier_effect_image = pygame.transform.scale(original_barrier_image, (effect_size, effect_size))
+      self.barrier_effect_image.set_alpha(200)
+      
+      # 初期位置をプレイヤーの中心に設定
+      self.barrier_effect_rect = self.barrier_effect_image.get_rect()
+      self.barrier_effect_rect.center = self.rect.center
+    else:
+      print(f"バリアエフェクト画像がないよ: {barrier_image_path}")
 
   def update(self, keys):
     if self.hp <= 0:
       return
+    
+    current_time = pygame.time.get_ticks()
     
     # 減速効果タイマー処理
     if self.is_slowed:
@@ -85,6 +107,18 @@ class Player(pygame.sprite.Sprite):
       if current_time - self.slow_start_time > self.slow_duration:
         self.is_slowed = False
         print(f"プレイヤー{self.player_id}の減速効果が終了しました。")
+
+    # 点滅処理
+    if current_time - self.last_hit_time < self.invicibility_duration:
+      self.is_invincible_blinking = True
+      if current_time - self.last_blink_time > self.blink_interval:
+        self.is_visible = not self.is_visible
+        self.last_blink_time = current_time
+        self.image = self.original_image if self.is_visible else pygame.Surface([self.rect.width, self.rect.height], pygame.SRCALPHA)
+    else:
+      self.is_invincible_blinking = False
+      self.is_visible = True
+      self.image = self.original_image
 
     # 移動速度計算
     current_speed = self.speed * self.slow_factor if self.is_slowed else self.speed
@@ -110,6 +144,10 @@ class Player(pygame.sprite.Sprite):
 
     self.rect.x = max(0, min(self.rect.x, self.screen_width - self.rect.width))
     self.rect.y = max(self.min_y, min(self.rect.y, self.max_y))
+
+    # バリアエフェクト
+    if self.has_barrier and self.barrier_effect_rect:
+      self.barrier_effect_rect.center = self.rect.center
 
   def shoot(self):
     if self.hp <= 0:
@@ -137,18 +175,23 @@ class Player(pygame.sprite.Sprite):
   def take_damage(self, damage_amount=1):
     current_time = pygame.time.get_ticks()
     if current_time - self.last_hit_time > self.invicibility_duration:
-      self.hp -= damage_amount
-      self.last_hit_time = current_time
-      print(f"プレイヤー{self.player_id}がダメージを受けました！残りHP: {self.hp}")
+      if self.has_barrier:
+        self.has_barrier = False
+        print(f"プレイヤー{self.player_id}のバリアがダメージを防ぎました！")
+        return False
+      else:
+        self.hp -= damage_amount
+        self.last_hit_time = current_time
+        print(f"プレイヤー{self.player_id}がダメージを受けました！残りHP: {self.hp}")
 
-      # プレイヤー被弾音の再生
-      if self.hit_sound:
-        self.hit_sound.play()
+        # プレイヤー被弾音の再生
+        if self.hit_sound:
+          self.hit_sound.play()
 
-      if self.hp <= 0:
-        self.kill()
+        if self.hp <= 0:
+          self.kill()
 
-      return True
+        return True
     return False
   
   def add_score(self, value):
@@ -173,3 +216,14 @@ class Player(pygame.sprite.Sprite):
     self.power_shot_duration = duration
     self.current_damage_multiplier = multiplier
     print(f"プレイヤー{self.player_id}にパワーショット効果が適用されました！")
+
+  # バリア関連のメソッド
+  def activate_barrier(self):
+    self.has_barrier = True
+    # バリアアクティベート時に確実に位置を更新
+    if self.barrier_effect_rect:
+      self.barrier_effect_rect.center = self.rect.center
+    print(f"プレイヤー{self.player_id}にバリアを展開しました！")
+  
+  def has_active_barrier(self):
+    return self.has_barrier

@@ -16,6 +16,7 @@ from shots.enemy_shot import EnemyShot
 from items.score_item import ScoreItem
 from items.power_shot_item import PowerShotItem
 from items.heal_item import HealItem
+from items.barrier_item import BarrierItem
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -133,11 +134,13 @@ class GameScreen(GameState):
         ScoreItem, 
         PowerShotItem,
         HealItem,
+        BarrierItem,
       ]
       item_weights = [
-        60,
-        25,
-        15,
+        0,
+        0,
+        0,
+        100,
       ]
       
       SelectedItemClass = random.choices(item_types, weights=item_weights, k=1)[0]
@@ -158,10 +161,20 @@ class GameScreen(GameState):
     self.enemy_shots.update()
     self.items.update()
 
-    self.debris.update(self.players)
+    # 破片の更新（引数なしに変更）
+    self.debris.update()
+
+    # 破片とプレイヤーの衝突判定（修正）
+    debris_hit_players = pygame.sprite.groupcollide(self.debris, self.players, True, False)
+    for debris_piece, hit_players_list in debris_hit_players.items():
+      for player in hit_players_list:
+        if player.is_alive():
+          damage_from_debris = debris_piece.damage_amount  # debris_pieceのdamage_amountを使用
+          player.take_damage(damage_from_debris)  # バリア判定がtake_damage内で行われる
 
     self.update_background()
 
+    # 以下の処理は変更なし...
     # 衝突判定
     shot_hit_planets = pygame.sprite.groupcollide(self.shots, self.planets, True, False)
     for shot, hit_planets_list in shot_hit_planets.items():
@@ -185,16 +198,16 @@ class GameScreen(GameState):
     enemy_shot_hit_players = pygame.sprite.groupcollide(self.enemy_shots, self.players, True, False)
     for enemy_shot, hit_players_list in enemy_shot_hit_players.items():
       for player in hit_players_list:
-        if player.is_alive(): # 生存しているプレイヤーにのみダメージを与える
-          player.take_damage(enemy_shot.damage) # 敵の弾のダメージを適用
-          print(f"プレイヤー{player.player_id}が敵の弾と衝突！HPが{player.hp}になりました。")
+        if player.is_alive():
+          player.take_damage(enemy_shot.damage)
 
-    # 当たり判定
+    # 惑星とプレイヤーの当たり判定
     player_hit_planets = pygame.sprite.groupcollide(self.players, self.planets, False, True)
     for player, hit_planets_list in player_hit_planets.items():
       for planet in hit_planets_list:
-        if player.take_damage():
-          pass
+        if player.is_alive():
+          damage_from_planet = 1
+          player.take_damage(damage_from_planet)
 
     # プレイヤーとアイテムの衝突判定
     player_hit_items = pygame.sprite.groupcollide(self.players, self.items, False, True)
@@ -221,7 +234,14 @@ class GameScreen(GameState):
   def draw(self):
     self.draw_background()
 
-    self.all_sprites.draw(self.screen)
+    for sprite in self.all_sprites:
+      if isinstance(sprite, Player):
+        if sprite.is_visible:
+          self.screen.blit(sprite.image, sprite.rect)
+          if sprite.has_barrier and sprite.barrier_effect_image:
+            self.screen.blit(sprite.barrier_effect_image, sprite.barrier_effect_rect)
+      else:
+        self.screen.blit(sprite.image, sprite.rect)
 
     player1_score_text = self.small_font.render(f"P1スコア: {self.player1.score}", True, RED)
     player1_hp_text = self.small_font.render(f"P1HP: {self.player1.hp}", True, RED)
