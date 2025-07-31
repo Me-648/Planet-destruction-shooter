@@ -4,6 +4,7 @@ import os
 from game_states.game_state import GameState
 from player import Player
 from shots.shot import Shot
+from shots.piercing_shot import PiercingShot
 from planets.normal_planet import NormalPlanet
 from planets.rock_planet import RockPlanet
 from planets.debris import Debris
@@ -18,6 +19,7 @@ from items.power_shot_item import PowerShotItem
 from items.heal_item import HealItem
 from items.barrier_item import BarrierItem
 from items.triple_shot_item import TripleShotItem
+from items.piercing_shot_item import PiercingShotItem
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -137,13 +139,15 @@ class GameScreen(GameState):
         HealItem,
         BarrierItem,
         TripleShotItem,
+        PiercingShotItem,
       ]
       item_weights = [
         0,
-        50,
+        30,
         0,
         0,
-        50,
+        30,
+        40,
       ]
       
       SelectedItemClass = random.choices(item_types, weights=item_weights, k=1)[0]
@@ -178,24 +182,37 @@ class GameScreen(GameState):
     self.update_background()
 
     # 以下の処理は変更なし...
-    # 衝突判定
-    shot_hit_planets = pygame.sprite.groupcollide(self.shots, self.planets, True, False)
-    for shot, hit_planets_list in shot_hit_planets.items():
-      for planet in hit_planets_list:
-        destroying_player = None
-        if hasattr(shot, 'owner_player') and shot.owner_player is not None:
-          destroying_player = shot.owner_player
-        planet_destroyed = planet.take_damage(shot.damage)
+    # 衝突判定(ショットと惑星)
+    for shot in self.shots:
+      planets_hit_by_shot = pygame.sprite.spritecollide(shot, self.planets, False, pygame.sprite.collide_mask)
+      for planet in planets_hit_by_shot:
+        # 貫通ショットの場合
+        if isinstance(shot, PiercingShot):
+          if planet not in shot.hit_enemies:
+            planet_destroyed = planet.take_damage(shot.damage)
+            shot.hit_enemies.add(planet)
 
-        if planet_destroyed:
-          if destroying_player:
-            destroying_player.score += planet.score_value
-            if destroying_player.score < 0:
-              destroying_player.score = 0
+            if planet_destroyed:
+              destroying_player = shot.owner_player
+              if destroying_player:
+                destroying_player.score += planet.score_value
+              
+              if self.explosion_sound:
+                self.explosion_sound.play()
+              planet.on_destroyed(self, destroying_player)
 
-          if self.explosion_sound:
-            self.explosion_sound.play()
-          planet.on_destroyed(self, destroying_player)
+        else:
+          planet_destroyed = planet.take_damage(shot.damage)
+          shot.kill()
+
+          if planet_destroyed:
+            destroying_player = shot.owner_player
+            if destroying_player:
+              destroying_player.score += planet.score_value
+            
+            if self.explosion_sound:
+              self.explosion_sound.play()
+            planet.on_destroyed(self, destroying_player)
 
     # 敵のショットがプレイヤーに当たる衝突判定
     enemy_shot_hit_players = pygame.sprite.groupcollide(self.enemy_shots, self.players, True, False)

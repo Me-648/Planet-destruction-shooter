@@ -5,6 +5,7 @@ from shots.shot import Shot
 from shots.normal_shot import NormalShot
 from shots.power_shot import PowerShot
 from shots.triple_shot import TripleShot
+from shots.piercing_shot import PiercingShot
 
 class Player(pygame.sprite.Sprite):
   def __init__(self, x, y, color, keys_left, keys_right, keys_up, keys_down, speed, screen_width, screen_height, player_id):
@@ -103,6 +104,11 @@ class Player(pygame.sprite.Sprite):
     self.triple_shot_duration = 0
     self.triple_shot_angle_offset = 15
 
+    # 貫通ショット関連のプロパティ
+    self.is_piercing_shot_active = False
+    self.piercing_shot_count = 0
+    self.piercing_shot_max_uses = 3
+
     self.active_shot_type = "normal"
 
   def update(self, keys):
@@ -123,16 +129,23 @@ class Player(pygame.sprite.Sprite):
     if self.is_power_shot_active:
       if current_time - self.power_shot_start_time > self.power_shot_duration:
         self.is_power_shot_active = False
-        self.current_damage_multiplier = 1
-        self.active_shot_type = "normal"
         print(f"プレイヤー{self.player_id}のパワーショット効果が終了しました。")
+        if not self.is_triple_shot_active and not self.is_piercing_shot_active:
+          self.active_shot_type = "normal"
 
     # 三方向ショットタイマー処理
     if self.is_triple_shot_active:
       if current_time - self.triple_shot_start_time > self.triple_shot_duration:
         self.is_triple_shot_active = False
-        self.active_shot_type = "normal"
         print(f"プレイヤー{self.player_id}の三方向ショット効果が終了しました。")
+        if not self.is_power_shot_active and not self.is_piercing_shot_active:
+          self.active_shot_type = "normal"
+
+    # 貫通ショットタイマー処理
+    if self.is_piercing_shot_active and self.piercing_shot_count <= 0:
+      self.is_triple_shot_active = False
+      if not self.is_power_shot_active and not self.is_triple_shot_active:
+        self.active_shot_type = "normal"
 
     # 点滅処理
     if current_time - self.last_hit_time < self.invicibility_duration:
@@ -200,6 +213,9 @@ class Player(pygame.sprite.Sprite):
           shots_to_fire.append(TripleShot(self.rect.centerx + offset_x, self.rect.top + offset_y, 
                                       owner_player=self, vx=current_vx, vy=current_vy,
                                       is_power_active=is_power_active))
+      elif self.active_shot_type == "piercing" and self.piercing_shot_count > 0:
+        shots_to_fire.append(PiercingShot(self.rect.centerx, self.rect.top, owner_player=self, is_power_active=is_power_active))
+        self.piercing_shot_count -= 1
       elif self.active_shot_type == "power":
         shots_to_fire.append(PowerShot(self.rect.centerx, self.rect.top, owner_player=self, is_power_active=is_power_active))
       else:
@@ -281,7 +297,16 @@ class Player(pygame.sprite.Sprite):
   def deactivate_all_shot_effects(self):
     self.is_power_shot_active = False
     self.is_triple_shot_active = False
+    self.is_piercing_shot_active = False
     self.active_shot_type = "normal"
+
+  # 貫通ショットをアクティブにするメソッド
+  def activate_piercing_shot(self, num_uses):
+    self.deactivate_all_shot_effects()
+    self.is_piercing_shot_active = True
+    self.piercing_shot_count = num_uses
+    self.active_shot_type = "piercing"
+    print(f"プレイヤー{self.player_id}に貫通ショット効果が適用されました！残り {self.piercing_shot_count} 発")
 
   def has_active_triple_shot(self):
     return self.is_triple_shot_active

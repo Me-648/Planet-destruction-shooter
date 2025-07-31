@@ -3,7 +3,7 @@ from shots.base_shot import Shot
 
 class PowerShot(Shot):
   def __init__(self, x, y, owner_player=None, is_power_active=False):
-    image_path = os.path.join('assets', 'images', 'shots' 'shot_power.png')
+    image_path = os.path.join('assets', 'images', 'shots', 'shot_power.png')
     size = (10, 18)
     color = (255, 255, 0)
     damage = 1
