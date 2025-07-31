@@ -140,10 +140,10 @@ class GameScreen(GameState):
       ]
       item_weights = [
         0,
+        50,
         0,
         0,
-        0,
-        100,
+        50,
       ]
       
       SelectedItemClass = random.choices(item_types, weights=item_weights, k=1)[0]
