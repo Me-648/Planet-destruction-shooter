@@ -30,6 +30,12 @@ class Player(pygame.sprite.Sprite):
     self.slow_duration = 5000
     self.slow_factor = 0.3
 
+    # 速度アップ関連のプロパティ
+    self.is_speed_up_active = False
+    self.speed_up_start_time = 0
+    self.speed_up_duration = 0
+    self.speed_up_multiplier = 1.0
+
     self.score = 0
     self.hp = 3
     self.max_hp = 3
@@ -146,6 +152,12 @@ class Player(pygame.sprite.Sprite):
       self.is_triple_shot_active = False
       if not self.is_power_shot_active and not self.is_triple_shot_active:
         self.active_shot_type = "normal"
+    
+    # 速度アップタイマー処理
+    if self.is_speed_up_active:
+      if current_time - self.speed_up_start_time > self.speed_up_duration:
+        self.is_speed_up_active = False
+        self.speed = self.original_speed    
 
     # 点滅処理
     if current_time - self.last_hit_time < self.invicibility_duration:
@@ -161,6 +173,8 @@ class Player(pygame.sprite.Sprite):
 
     # 移動速度計算
     current_speed = self.speed * self.slow_factor if self.is_slowed else self.speed
+    if self.is_speed_up_active:
+      current_speed *= self.speed_up_multiplier
 
     if keys[self.keys_left]:
       self.rect.x -= current_speed
@@ -310,3 +324,13 @@ class Player(pygame.sprite.Sprite):
 
   def has_active_triple_shot(self):
     return self.is_triple_shot_active
+  
+  def activate_speed_up(self, duration_ms, multiplier):
+    self.is_speed_up_active = True
+    self.speed_up_start_time = pygame.time.get_ticks()
+    self.speed_up_duration = duration_ms
+    self.speed_up_multiplier = multiplier
+    print(f"プレイヤー{self.player_id}の移動速度が {multiplier} 倍になりました！")
+    
+  def has_active_speed_up(self):
+    return self.is_speed_up_active

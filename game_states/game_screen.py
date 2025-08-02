@@ -20,6 +20,7 @@ from items.heal_item import HealItem
 from items.barrier_item import BarrierItem
 from items.triple_shot_item import TripleShotItem
 from items.piercing_shot_item import PiercingShotItem
+from items.speed_up_item import SpeedUpItem
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -140,14 +141,16 @@ class GameScreen(GameState):
         BarrierItem,
         TripleShotItem,
         PiercingShotItem,
+        SpeedUpItem,
       ]
       item_weights = [
         0,
-        30,
         0,
         0,
-        30,
-        40,
+        0,
+        0,
+        0,
+        100,
       ]
       
       SelectedItemClass = random.choices(item_types, weights=item_weights, k=1)[0]
