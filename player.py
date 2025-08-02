@@ -40,13 +40,32 @@ class Player(pygame.sprite.Sprite):
     self.hp = 3
     self.max_hp = 3
 
-    # 無敵時間
+    # 被弾後の無敵時間
     self.last_hit_time = 0
     self.invicibility_duration = 1500
     self.is_invincible_blinking = False
     self.blink_interval = 100
     self.last_blink_time = 0
     self.is_visible = True
+
+    # アイテムによる無敵時間
+    self.is_item_invincible_active = False
+    self.item_invincibility_start_time = 0
+    self.item_invincibility_duration = 0
+
+    # 無敵エフェクト(色)
+    self.color_change_timer = 0
+    self.color_list = [
+      (255, 0, 0),    # 赤
+      (255, 127, 0),  # 橙
+      (255, 255, 0),  # 黄
+      (0, 255, 0),    # 緑
+      (0, 0, 255),    # 青
+      (75, 0, 130),   # 藍
+      (143, 0, 255)   # 紫
+    ]
+    self.current_color_index = 0
+    self.color_change_interval = 100
 
     self.keys_left = keys_left
     self.keys_right = keys_right
@@ -149,7 +168,7 @@ class Player(pygame.sprite.Sprite):
 
     # 貫通ショットタイマー処理
     if self.is_piercing_shot_active and self.piercing_shot_count <= 0:
-      self.is_triple_shot_active = False
+      self.is_piercing_shot_active = False
       if not self.is_power_shot_active and not self.is_triple_shot_active:
         self.active_shot_type = "normal"
     
@@ -157,19 +176,32 @@ class Player(pygame.sprite.Sprite):
     if self.is_speed_up_active:
       if current_time - self.speed_up_start_time > self.speed_up_duration:
         self.is_speed_up_active = False
-        self.speed = self.original_speed    
+        self.speed = self.original_speed
+
+    # アイテムによる無敵時間タイマー処理
+    if self.is_item_invincible_active:
+      if current_time - self.item_invincibility_start_time > self.item_invincibility_duration:
+        self.is_item_invincible_active = False
+        print(f"プレイヤー{self.player_id}の無敵効果が終了しました。")
+        self.image = self.original_image.copy()
+      elif current_time - self.color_change_timer > self.color_change_interval:
+        self.color_change_timer = current_time
+        self.current_color_index = (self.current_color_index + 1) % len(self.color_list)
+        new_color = self.color_list[self.current_color_index]
+        self.image.fill(new_color)
+    else:
+      pass
 
     # 点滅処理
-    if current_time - self.last_hit_time < self.invicibility_duration:
+    is_temp_invincible = current_time - self.last_hit_time < self.invicibility_duration
+    if is_temp_invincible and not self.is_item_invincible_active:
       self.is_invincible_blinking = True
       if current_time - self.last_blink_time > self.blink_interval:
         self.is_visible = not self.is_visible
         self.last_blink_time = current_time
-        self.image = self.original_image if self.is_visible else pygame.Surface([self.rect.width, self.rect.height], pygame.SRCALPHA)
     else:
       self.is_invincible_blinking = False
       self.is_visible = True
-      self.image = self.original_image
 
     # 移動速度計算
     current_speed = self.speed * self.slow_factor if self.is_slowed else self.speed
@@ -240,25 +272,31 @@ class Player(pygame.sprite.Sprite):
   
   def take_damage(self, damage_amount=1):
     current_time = pygame.time.get_ticks()
-    if current_time - self.last_hit_time > self.invicibility_duration:
-      if self.has_barrier:
-        self.has_barrier = False
-        print(f"プレイヤー{self.player_id}のバリアがダメージを防ぎました！")
+
+    if self.is_item_invincible_active:
+      print(f"プレイヤー{self.player_id}は無敵効果によりダメージを防ぎました！")
+      return False
+    
+    if current_time - self.last_hit_time < self.invicibility_duration:
         return False
-      else:
-        self.hp -= damage_amount
-        self.last_hit_time = current_time
-        print(f"プレイヤー{self.player_id}がダメージを受けました！残りHP: {self.hp}")
 
-        # プレイヤー被弾音の再生
-        if self.hit_sound:
-          self.hit_sound.play()
+    if self.has_barrier:
+      self.has_barrier = False
+      print(f"プレイヤー{self.player_id}のバリアがダメージを防ぎました！")
+      return False
+    
+    self.hp -= damage_amount
+    self.last_hit_time = current_time
+    print(f"プレイヤー{self.player_id}がダメージを受けました！残りHP: {self.hp}")
+    
+    # プレイヤー被弾音の再生
+    if self.hit_sound:
+      self.hit_sound.play()
 
-        if self.hp <= 0:
-          self.kill()
+    if self.hp <= 0:
+      self.kill()
 
-        return True
-    return False
+    return True
   
   def add_score(self, value):
     self.score += value
@@ -322,6 +360,13 @@ class Player(pygame.sprite.Sprite):
     self.active_shot_type = "piercing"
     print(f"プレイヤー{self.player_id}に貫通ショット効果が適用されました！残り {self.piercing_shot_count} 発")
 
+  # 無敵をアクティブにするメソッド
+  def activate_invincibility(self, duration_ms):
+    self.is_item_invincible_active = True
+    self.item_invincibility_start_time = pygame.time.get_ticks()
+    self.item_invincibility_duration = duration_ms
+    print(f"プレイヤー{self.player_id}が無敵になりました！")
+
   def has_active_triple_shot(self):
     return self.is_triple_shot_active
   
@@ -334,3 +379,19 @@ class Player(pygame.sprite.Sprite):
     
   def has_active_speed_up(self):
     return self.is_speed_up_active
+  
+  def draw(self, screen):
+    is_currently_visible = self.is_visible or self.is_item_invincible_active
+
+    if is_currently_visible:
+      current_image = self.image.copy()
+
+      if not self.is_item_invincible_active:
+        current_image.fill(self.color)
+
+      screen.blit(current_image, self.rect)
+        
+    # バリアエフェクトの描画
+    if self.has_barrier and self.barrier_effect_image:
+      self.barrier_effect_rect.center = self.rect.center
+      screen.blit(self.barrier_effect_image, self.barrier_effect_rect)

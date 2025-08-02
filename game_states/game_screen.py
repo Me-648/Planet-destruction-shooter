@@ -21,6 +21,7 @@ from items.barrier_item import BarrierItem
 from items.triple_shot_item import TripleShotItem
 from items.piercing_shot_item import PiercingShotItem
 from items.speed_up_item import SpeedUpItem
+from items.invincibility_item import InvincibilityItem
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -142,15 +143,17 @@ class GameScreen(GameState):
         TripleShotItem,
         PiercingShotItem,
         SpeedUpItem,
+        InvincibilityItem,
       ]
       item_weights = [
         0,
+        20,
         0,
+        20,
+        20,
+        20,
         0,
-        0,
-        0,
-        0,
-        100,
+        20,
       ]
       
       SelectedItemClass = random.choices(item_types, weights=item_weights, k=1)[0]
@@ -259,12 +262,13 @@ class GameScreen(GameState):
 
     for sprite in self.all_sprites:
       if isinstance(sprite, Player):
-        if sprite.is_visible:
-          self.screen.blit(sprite.image, sprite.rect)
-          if sprite.has_barrier and sprite.barrier_effect_image:
-            self.screen.blit(sprite.barrier_effect_image, sprite.barrier_effect_rect)
-      else:
-        self.screen.blit(sprite.image, sprite.rect)
+        continue
+      self.screen.blit(sprite.image, sprite.rect)
+
+    if self.player1.is_alive():
+      self.player1.draw(self.screen)
+    if self.player2.is_alive():
+      self.player2.draw(self.screen)
 
     player1_score_text = self.small_font.render(f"P1スコア: {self.player1.score}", True, RED)
     player1_hp_text = self.small_font.render(f"P1HP: {self.player1.hp}", True, RED)
