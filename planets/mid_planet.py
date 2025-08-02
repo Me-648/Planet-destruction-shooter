@@ -6,7 +6,7 @@ class MidPlanet(BasePlanet):
   def __init__(self, screen_width, screen_height):
     size = 150
     color = (150, 100, 50)
-    speed = random.uniform(0.3, 1.0)
+    speed = random.uniform(1.0, 1.3)
     hp = 30
     score_value = 150
 

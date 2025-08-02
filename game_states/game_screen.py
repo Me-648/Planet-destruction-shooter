@@ -22,6 +22,7 @@ from items.triple_shot_item import TripleShotItem
 from items.piercing_shot_item import PiercingShotItem
 from items.speed_up_item import SpeedUpItem
 from items.invincibility_item import InvincibilityItem
+from items.slow_item import SlowItem
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -66,6 +67,12 @@ class GameScreen(GameState):
     self.debris = pygame.sprite.Group()
     self.items = pygame.sprite.Group()
 
+    # 惑星スローダウン関連のプロパティ
+    self.is_planet_slowdown_active = False
+    self.planet_slowdown_start_time = 0
+    self.planet_slowdown_duration = 0
+    self.planet_slowdown_factor = 1.0
+
     self.reset_game()
 
   def reset_game(self):
@@ -89,9 +96,13 @@ class GameScreen(GameState):
     self.players.add(self.player1, self.player2)
 
     # 隕石を生成
-    pygame.time.set_timer(self.ADDPLANET, 400)
+    pygame.time.set_timer(self.ADDPLANET, 550)
     # アイテムを生成
     pygame.time.set_timer(self.ADDITEM, 5000)
+
+    # スローダウン効果をリセット
+    self.is_planet_slowdown_active = False
+    self.planet_slowdown_factor = 1.0
 
   def handle_event(self, event):
     if event.type == pygame.KEYDOWN:
@@ -144,16 +155,18 @@ class GameScreen(GameState):
         PiercingShotItem,
         SpeedUpItem,
         InvincibilityItem,
+        SlowItem,
       ]
       item_weights = [
-        0,
         20,
-        0,
-        20,
-        20,
-        20,
-        0,
-        20,
+        15,
+        14,
+        10,
+        14,
+        7,
+        12,
+        3,
+        5,
       ]
       
       SelectedItemClass = random.choices(item_types, weights=item_weights, k=1)[0]
@@ -166,6 +179,15 @@ class GameScreen(GameState):
 
     self.player1.update(keys)
     self.player2.update(keys)
+
+    current_time = pygame.time.get_ticks()
+    # 惑星スローダウンのタイマー処理
+    if self.is_planet_slowdown_active:
+      if current_time - self.planet_slowdown_start_time > self.planet_slowdown_duration:
+        self.is_planet_slowdown_active = False
+        self.planet_slowdown_factor = 1.0
+        print("惑星のスローダウン効果が終了しました。")
+
 
     for planet in self.planets:
       planet.update(self)
@@ -182,16 +204,21 @@ class GameScreen(GameState):
     for debris_piece, hit_players_list in debris_hit_players.items():
       for player in hit_players_list:
         if player.is_alive():
-          damage_from_debris = debris_piece.damage_amount  # debris_pieceのdamage_amountを使用
-          player.take_damage(damage_from_debris)  # バリア判定がtake_damage内で行われる
+          damage_from_debris = debris_piece.damage_amount
+          player.take_damage(damage_from_debris)
 
     self.update_background()
 
-    # 以下の処理は変更なし...
     # 衝突判定(ショットと惑星)
-    for shot in self.shots:
+    for shot in self.shots.copy():
+      if not shot.alive():
+        continue
+        
       planets_hit_by_shot = pygame.sprite.spritecollide(shot, self.planets, False, pygame.sprite.collide_mask)
       for planet in planets_hit_by_shot:
+        if not planet.alive():
+          continue
+          
         # 貫通ショットの場合
         if isinstance(shot, PiercingShot):
           if planet not in shot.hit_enemies:
@@ -202,10 +229,13 @@ class GameScreen(GameState):
               destroying_player = shot.owner_player
               if destroying_player:
                 destroying_player.score += planet.score_value
+                if destroying_player.score < 0:
+                  destroying_player.score = 0
               
               if self.explosion_sound:
                 self.explosion_sound.play()
               planet.on_destroyed(self, destroying_player)
+              planet.kill()
 
         else:
           planet_destroyed = planet.take_damage(shot.damage)
@@ -215,10 +245,15 @@ class GameScreen(GameState):
             destroying_player = shot.owner_player
             if destroying_player:
               destroying_player.score += planet.score_value
+              if destroying_player.score < 0:
+                destroying_player.score = 0
             
             if self.explosion_sound:
               self.explosion_sound.play()
             planet.on_destroyed(self, destroying_player)
+            planet.kill()
+          
+          break
 
     # 敵のショットがプレイヤーに当たる衝突判定
     enemy_shot_hit_players = pygame.sprite.groupcollide(self.enemy_shots, self.players, True, False)
@@ -256,6 +291,14 @@ class GameScreen(GameState):
       self.player1.kill()
     elif p2_game_over:
       self.player2.kill()
+  
+  # 惑星スローダウンをアクティブにするメソッド
+  def activate_planet_slowdown(self, duration_ms, slow_factor):
+    self.is_planet_slowdown_active = True
+    self.planet_slowdown_start_time = pygame.time.get_ticks()
+    self.planet_slowdown_duration = duration_ms
+    self.planet_slowdown_factor = slow_factor
+    print(f"惑星の速度が {slow_factor} 倍になりました！")
   
   def draw(self):
     self.draw_background()

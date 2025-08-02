@@ -35,7 +35,7 @@ class UFOPlanet(BasePlanet):
 
   
   def update(self, game_screen_instance):
-    super().update()
+    super().update(game_screen_instance)
     self.attack_timer += 1
 
     self.rect.x += self.zigzag_direction * self.zigzag_speed

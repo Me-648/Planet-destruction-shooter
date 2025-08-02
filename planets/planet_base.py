@@ -19,6 +19,8 @@ class BasePlanet(pygame.sprite.Sprite):
     self.rect.y = -self.rect.height
 
     self.speed = speed
+    self.speed_x = 0
+    self.speed_y = speed
     self.hp = hp
     self.score_value = score_value
     self.screen_height = screen_height
@@ -27,7 +29,13 @@ class BasePlanet(pygame.sprite.Sprite):
     self.destroyed = False
 
   def update(self, game_screen=None):
-    self.rect.y += self.speed
+    if game_screen and game_screen.is_planet_slowdown_active:
+        slowdown_factor = game_screen.planet_slowdown_factor
+    else:
+        slowdown_factor = 1.0
+
+    self.rect.x += self.speed_x * slowdown_factor
+    self.rect.y += self.speed_y * slowdown_factor
 
     # 画面下まで行ったら消える
     if self.rect.y > self.screen_height:
