@@ -8,10 +8,11 @@ from shots.triple_shot import TripleShot
 from shots.piercing_shot import PiercingShot
 
 class Player(pygame.sprite.Sprite):
-  def __init__(self, x, y, color, keys_left, keys_right, keys_up, keys_down, speed, screen_width, screen_height, player_id):
+  def __init__(self, x, y, color, keys_left, keys_right, keys_up, keys_down, speed, screen_width, screen_height, player_id, size=70):
     super().__init__()
 
-    self.image = pygame.Surface([50, 50])
+    self.player_size = size
+    self.image = pygame.Surface([self.player_size, self.player_size])
     self.image.fill(color)
     self.rect = self.image.get_rect()
     self.rect.x = x
@@ -84,6 +85,21 @@ class Player(pygame.sprite.Sprite):
     # プレイヤーID
     self.player_id = player_id
 
+    # 画像のロード
+    image_path = f"player{self.player_id}.png"
+    full_path = os.path.join('assets', 'images', image_path)
+    
+    if os.path.exists(full_path):
+      original_image = pygame.image.load(full_path).convert_alpha()
+      # プレイヤーサイズに合わせてスケール
+      self.original_image = pygame.transform.scale(original_image, (self.player_size, self.player_size))
+      self.image = self.original_image.copy()
+    else:
+      print(f"プレイヤー画像が見つかりません: {full_path}")
+      self.original_image = pygame.Surface([self.player_size, self.player_size])
+      self.original_image.fill(color)
+      self.image = self.original_image.copy()
+
     # 効果音のロード
     self.shot_sound = None
     self.hit_sound = None
@@ -113,11 +129,11 @@ class Player(pygame.sprite.Sprite):
     barrier_image_path = os.path.join('assets', 'images', 'items', 'item_barrier.png')
     if os.path.exists(barrier_image_path):
       original_barrier_image = pygame.image.load(barrier_image_path).convert_alpha()
-      effect_size = int(self.rect.width * 1.5)
+      # プレイヤーサイズに比例してバリアサイズを調整
+      effect_size = int(self.player_size * 1.1)
       self.barrier_effect_image = pygame.transform.scale(original_barrier_image, (effect_size, effect_size))
-      self.barrier_effect_image.set_alpha(200)
+      self.barrier_effect_image.set_alpha(150)
       
-      # 初期位置をプレイヤーの中心に設定
       self.barrier_effect_rect = self.barrier_effect_image.get_rect()
       self.barrier_effect_rect.center = self.rect.center
     else:
@@ -227,8 +243,8 @@ class Player(pygame.sprite.Sprite):
     if self.rect.bottom > self.screen_height:
         self.rect.bottom = self.screen_height
 
-    self.rect.x = max(0, min(self.rect.x, self.screen_width - self.rect.width))
-    self.rect.y = max(self.min_y, min(self.rect.y, self.max_y))
+    self.rect.x = max(0, min(self.rect.x, self.screen_width - self.player_size))
+    self.rect.y = max(self.min_y, min(self.rect.y, self.screen_height - self.player_size))
 
     # バリアエフェクト
     if self.has_barrier and self.barrier_effect_rect:
@@ -381,16 +397,20 @@ class Player(pygame.sprite.Sprite):
     return self.is_speed_up_active
   
   def draw(self, screen):
+    is_temp_invincible = pygame.time.get_ticks() - self.last_hit_time < self.invicibility_duration
     is_currently_visible = self.is_visible or self.is_item_invincible_active
 
     if is_currently_visible:
-      current_image = self.image.copy()
+      current_image = self.original_image.copy()
 
-      if not self.is_item_invincible_active:
-        current_image.fill(self.color)
-
+      if self.is_item_invincible_active:
+        rainbow_color = self.color_list[self.current_color_index]
+        color_image = pygame.Surface(current_image.get_size()).convert_alpha()
+        color_image.fill(rainbow_color)
+        current_image.blit(color_image, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    
       screen.blit(current_image, self.rect)
-        
+  
     # バリアエフェクトの描画
     if self.has_barrier and self.barrier_effect_image:
       self.barrier_effect_rect.center = self.rect.center

@@ -76,12 +76,15 @@ class GameScreen(GameState):
     self.reset_game()
 
   def reset_game(self):
-    self.player1 = Player(self.screen_width // 4, self.screen_height - 80, RED,
-                            pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s,
-                            10, self.screen_width, self.screen_height, player_id=1)
-    self.player2 = Player(self.screen_width * 3 // 4, self.screen_height - 80, GREEN,
-                            pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN,
-                            10, self.screen_width, self.screen_height, player_id=2)
+    player_size = 70  # 新しいプレイヤーサイズ
+    initial_y = self.screen_height - player_size - 10  # 画面下端から少し余裕を持たせる
+    
+    self.player1 = Player(self.screen_width // 4, initial_y, RED,
+                          pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s,
+                          10, self.screen_width, self.screen_height, player_id=1, size=player_size)
+    self.player2 = Player(self.screen_width * 3 // 4, initial_y, GREEN,
+                          pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN,
+                          10, self.screen_width, self.screen_height, player_id=2, size=player_size)
 
     # 既存のグループをクリアしてから新しいプレイヤーを追加
     self.all_sprites.empty()
@@ -158,15 +161,15 @@ class GameScreen(GameState):
         SlowItem,
       ]
       item_weights = [
-        20,
-        15,
-        14,
-        10,
-        14,
-        7,
-        12,
-        3,
-        5,
+        0,
+        0,
+        0,
+        50,
+        0,
+        0,
+        0,
+        50,
+        0,
       ]
       
       SelectedItemClass = random.choices(item_types, weights=item_weights, k=1)[0]
