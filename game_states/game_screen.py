@@ -54,6 +54,34 @@ class GameScreen(GameState):
       self.item_get_sound.set_volume(0.1)
     else:
       print(f"アイテム取得音がないよ: {item_get_sound_path}")
+    
+    # 特定のアイテム用のサウンドをロード
+    self.special_item_sounds = {}
+    special_item_sound_paths = {
+      "heal": os.path.join('assets', 'sounds', 'heal_get.mp3'),
+      "invincibility": os.path.join('assets', 'sounds', 'invincibility_get.mp3'),
+      "barrier": os.path.join('assets', 'sounds', 'barrier_get.mp3'),
+      "slow": os.path.join('assets', 'sounds', 'slow_get.mp3'),
+      "score": os.path.join('assets', 'sounds', 'score_get.mp3'),
+      "speedup": os.path.join('assets', 'sounds', 'speed_get.mp3'),
+    }
+    # 各効果音の音量を個別に設定
+    special_item_volumes = {
+      "heal": 0.1,
+      "invincibility": 0.2,
+      "barrier": 0.4,
+      "slow": 1.5,
+      "score": 0.07,
+      "speedup": 0.7,
+    }
+    for key, path in special_item_sound_paths.items():
+      if os.path.exists(path):
+        sound = pygame.mixer.Sound(path)
+        default_volume = 0.2
+        sound.set_volume(special_item_volumes.get(key, default_volume))
+        self.special_item_sounds[key] = sound
+      else:
+        print(f"特殊アイテム取得音が見つかりません: {path}")
 
     self.enemy_shots = pygame.sprite.Group()
 
@@ -161,15 +189,15 @@ class GameScreen(GameState):
         SlowItem,
       ]
       item_weights = [
-        0,
-        0,
-        0,
-        50,
-        0,
-        0,
-        0,
-        50,
-        0,
+        20,
+        15,
+        14,
+        10,
+        14,
+        7,
+        12,
+        3,
+        5,
       ]
       
       SelectedItemClass = random.choices(item_types, weights=item_weights, k=1)[0]
@@ -284,7 +312,15 @@ class GameScreen(GameState):
         if player.is_alive():
           item.apply_effect(player, self)
           self.all_sprites.remove(item)
-          if self.item_get_sound:
+      
+          # アイテムのクラス名に対応するサウンドキーを取得
+          item_name = type(item).__name__.replace("Item", "").lower()
+      
+          # 特定のサウンドがあればそれを再生
+          if item_name in self.special_item_sounds:
+            self.special_item_sounds[item_name].play()
+          # なければデフォルトの音を再生
+          elif self.item_get_sound:
             self.item_get_sound.play()
     
     # ゲームオーバー判定
