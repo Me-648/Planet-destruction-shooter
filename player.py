@@ -103,8 +103,10 @@ class Player(pygame.sprite.Sprite):
     # 効果音のロード
     self.shot_sound = None
     self.hit_sound = None
+    self.barrier_break_sound = None
     shot_sound_path = os.path.join('assets', 'sounds', 'shot.mp3')
     player_hit_sound_path = os.path.join('assets', 'sounds', 'player_hit.mp3')
+    barrier_break_sound_path = os.path.join('assets', 'sounds', 'barrier_break.mp3')
     if os.path.exists(shot_sound_path):
       self.shot_sound = pygame.mixer.Sound(shot_sound_path)
       self.shot_sound.set_volume(0.2)
@@ -115,6 +117,12 @@ class Player(pygame.sprite.Sprite):
       self.hit_sound.set_volume(0.2)
     else:
       print(f"プレイヤーヒット音がないよ: {player_hit_sound_path}")
+    # バリア破壊音をロード
+    if os.path.exists(barrier_break_sound_path):
+      self.barrier_break_sound = pygame.mixer.Sound(barrier_break_sound_path)
+      self.barrier_break_sound.set_volume(0.2)
+    else:
+      print(f"バリア破壊音がないよ: {barrier_break_sound_path}")
     
     # パワーショット(アイテム)関連のプロパティ
     self.is_power_shot_active = False
@@ -298,6 +306,8 @@ class Player(pygame.sprite.Sprite):
 
     if self.has_barrier:
       self.has_barrier = False
+      if self.barrier_break_sound:
+        self.barrier_break_sound.play()
       print(f"プレイヤー{self.player_id}のバリアがダメージを防ぎました！")
       return False
     

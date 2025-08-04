@@ -270,8 +270,12 @@ class GameScreen(GameState):
     for player, hit_planets_list in player_hit_planets.items():
       for planet in hit_planets_list:
         if player.is_alive():
-          damage_from_planet = 1
-          player.take_damage(damage_from_planet)
+          if player.is_item_invincible_active:
+            if self.explosion_sound:
+              self.explosion_sound.play()
+          else:
+            damage_from_planet = 1
+            player.take_damage(damage_from_planet)
 
     # プレイヤーとアイテムの衝突判定
     player_hit_items = pygame.sprite.groupcollide(self.players, self.items, False, True)
