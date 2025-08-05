@@ -23,6 +23,7 @@ from items.piercing_shot_item import PiercingShotItem
 from items.speed_up_item import SpeedUpItem
 from items.invincibility_item import InvincibilityItem
 from items.slow_item import SlowItem
+from planets.mid_boss import MidBoss
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -68,7 +69,7 @@ class GameScreen(GameState):
     # 各効果音の音量を個別に設定
     special_item_volumes = {
       "heal": 0.1,
-      "invincibility": 0.2,
+      "invincibility": 0.5,
       "barrier": 0.4,
       "slow": 1.5,
       "score": 0.07,
@@ -100,6 +101,11 @@ class GameScreen(GameState):
     self.planet_slowdown_start_time = 0
     self.planet_slowdown_duration = 0
     self.planet_slowdown_factor = 1.0
+
+    # 中ボス関連のプロパティ
+    self.mid_boss = None
+    self.mid_boss_spawn_counter = 0
+    self.mid_boss_spawn_threshold = 100
 
     self.reset_game()
 
@@ -134,6 +140,10 @@ class GameScreen(GameState):
     # スローダウン効果をリセット
     self.is_planet_slowdown_active = False
     self.planet_slowdown_factor = 1.0
+
+    # 中ボス関連のプロパティをリセット
+    self.mid_boss = None
+    self.mid_boss_spawn_counter = 0
 
   def handle_event(self, event):
     if event.type == pygame.KEYDOWN:
@@ -273,6 +283,23 @@ class GameScreen(GameState):
           shot.kill()
 
           if planet_destroyed:
+            # 倒したのが中ボスだった場合
+            if isinstance(planet, MidBoss):
+                print("中ボスを倒しました！")
+                destroying_player = shot.owner_player
+                if destroying_player:
+                    destroying_player.score += planet.score_value
+                
+                # 中ボス変数をリセット
+                self.mid_boss = None
+                self.mid_boss_spawn_counter = 0
+                
+            else: # 倒したのが通常惑星だった場合
+                self.mid_boss_spawn_counter += 1
+                print(f"惑星破壊数: {self.mid_boss_spawn_counter}")
+                if self.mid_boss is None and self.mid_boss_spawn_counter >= self.mid_boss_spawn_threshold:
+                  self.spawn_mid_boss()
+
             destroying_player = shot.owner_player
             if destroying_player:
               destroying_player.score += planet.score_value
@@ -304,6 +331,11 @@ class GameScreen(GameState):
           else:
             damage_from_planet = 1
             player.take_damage(damage_from_planet)
+          self.mid_boss_spawn_counter += 1
+          print(f"惑星破壊数: {self.mid_boss_spawn_counter}")
+          if self.mid_boss is None and self.mid_boss_spawn_counter >= self.mid_boss_spawn_threshold:
+            self.spawn_mid_boss()
+
 
     # プレイヤーとアイテムの衝突判定
     player_hit_items = pygame.sprite.groupcollide(self.players, self.items, False, True)
@@ -342,6 +374,13 @@ class GameScreen(GameState):
     self.planet_slowdown_duration = duration_ms
     self.planet_slowdown_factor = slow_factor
     print(f"惑星の速度が {slow_factor} 倍になりました！")
+
+  # 中ボス生成
+  def spawn_mid_boss(self):
+    self.mid_boss = MidBoss(self.screen_width, self.screen_height)
+    self.all_sprites.add(self.mid_boss)
+    self.planets.add(self.mid_boss) # 惑星グループにも追加して、ショットとの衝突判定ができるようにする
+    print("中ボスが出現しました！")
   
   def draw(self):
     self.draw_background()
@@ -355,6 +394,9 @@ class GameScreen(GameState):
       self.player1.draw(self.screen)
     if self.player2.is_alive():
       self.player2.draw(self.screen)
+
+    if self.mid_boss and self.mid_boss.alive():
+      self.mid_boss.draw_hp_bar(self.screen)
 
     player1_score_text = self.small_font.render(f"P1スコア: {self.player1.score}", True, RED)
     player1_hp_text = self.small_font.render(f"P1HP: {self.player1.hp}", True, RED)

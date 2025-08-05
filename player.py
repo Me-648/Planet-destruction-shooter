@@ -38,8 +38,8 @@ class Player(pygame.sprite.Sprite):
     self.speed_up_multiplier = 1.0
 
     self.score = 0
-    self.hp = 3
-    self.max_hp = 3
+    self.hp = 5
+    self.max_hp = 5
 
     # 被弾後の無敵時間
     self.last_hit_time = 0

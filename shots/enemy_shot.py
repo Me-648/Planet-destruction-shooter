@@ -5,7 +5,7 @@ class EnemyShot(pygame.sprite.Sprite):
   def __init__(self, x, y, speed, target_player_rect):
     super().__init__()
 
-    shot_image_path = os.path.join('assets', 'images', 'enemy_shot.png') 
+    shot_image_path = os.path.join('assets', 'images', 'shots', 'shot_enemy.png') 
     if os.path.exists(shot_image_path):
             original_image = pygame.image.load(shot_image_path).convert_alpha()
             self.image = pygame.transform.scale(original_image, (20, 20)) # 弾のサイズを設定
