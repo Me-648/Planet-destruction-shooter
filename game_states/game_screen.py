@@ -55,6 +55,15 @@ class GameScreen(GameState):
       self.item_get_sound.set_volume(0.1)
     else:
       print(f"アイテム取得音がないよ: {item_get_sound_path}")
+
+    # 一時停止用の交換音のロード
+    self.pause_sound = None
+    pause_sound_path = os.path.join('assets', 'sounds', 'pause.mp3')
+    if os.path.exists(pause_sound_path):
+      self.pause_sound = pygame.mixer.Sound(pause_sound_path)
+      self.pause_sound.set_volume(0.2)
+    else:
+      print(f"一時停止音がないぜ☆: {pause_sound_path}")
     
     # 特定のアイテム用のサウンドをロード
     self.special_item_sounds = {}
@@ -107,11 +116,15 @@ class GameScreen(GameState):
     self.mid_boss_spawn_counter = 0
     self.mid_boss_spawn_threshold = 100
 
+    # 一時停止状態のフラグ
+    self.is_paused = False
+
     self.reset_game()
 
   def reset_game(self):
-    player_size = 70  # 新しいプレイヤーサイズ
-    initial_y = self.screen_height - player_size - 10  # 画面下端から少し余裕を持たせる
+    player_size = 70
+    initial_y = self.screen_height - player_size - 10
+    self.is_paused = False
     
     self.player1 = Player(self.screen_width // 4, initial_y, RED,
                           pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s,
@@ -147,6 +160,32 @@ class GameScreen(GameState):
 
   def handle_event(self, event):
     if event.type == pygame.KEYDOWN:
+      # Pキーで一時停止/再開
+      if event.key == pygame.K_p:
+        self.is_paused = not self.is_paused
+        print(f"ゲームを{'一時停止' if self.is_paused else '再開'}しました。")
+        # 惑星生成とアイテム生成のタイマーを制御
+        if self.is_paused:
+          pygame.time.set_timer(self.ADDPLANET, 0)
+          pygame.time.set_timer(self.ADDITEM, 0)
+          # BGMの一時停止
+          if pygame.mixer.music.get_busy():
+            pygame.mixer.music.pause()
+        else:
+          # 惑星生成とアイテム生成のタイマーを再開
+          pygame.time.set_timer(self.ADDPLANET, 550)
+          pygame.time.set_timer(self.ADDITEM, 5000)
+          # BGMの再開
+          pygame.mixer.music.unpause()
+            
+        # 効果音の再生
+        if self.pause_sound:
+          self.pause_sound.play()
+        return
+      
+      if self.is_paused:
+        return
+      
       if event.key == pygame.K_SPACE:
         shot = self.player1.shoot()
         if shot:
@@ -216,6 +255,9 @@ class GameScreen(GameState):
       self.items.add(new_item)
   
   def update(self):
+    if self.is_paused:
+      return
+
     keys = pygame.key.get_pressed()
 
     self.player1.update(keys)
@@ -407,3 +449,17 @@ class GameScreen(GameState):
     player2_hp_text = self.small_font.render(f"P2HP: {self.player2.hp}", True, GREEN)
     self.screen.blit(player2_score_text, (self.screen_width - player2_score_text.get_width() - 10, 10))
     self.screen.blit(player2_hp_text, (self.screen_width - player2_hp_text.get_width() - 10, 60))
+
+    if self.is_paused:
+      # 半透明の黒いオーバーレイを描画
+      overlay = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+      overlay.fill((0, 0, 0, 150))
+      self.screen.blit(overlay, (0, 0))
+
+      pause_text = self.font.render("PAUSED", True, (255, 255, 255))
+      pause_text_rect = pause_text.get_rect(center=(self.screen_width // 2, self.screen_height // 2))
+      self.screen.blit(pause_text, pause_text_rect)
+
+      continue_text = self.small_font.render("Pキーで再開", True, (255, 255, 255))
+      continue_text_rect = continue_text.get_rect(center=(self.screen_width // 2, self.screen_height // 2 + 50))
+      self.screen.blit(continue_text, continue_text_rect)

@@ -37,8 +37,8 @@ class HowToPlayScreen(GameState):
     instructions_text_lines = [
       "プレイヤー1: A/D/W/Sキーで移動, SPACEキーでショット",
       "プレイヤー2: 矢印キーで移動, ENTERキーでショット",
+      "Pキーで一時停止/再開",
       "宙から降ってくる惑星を破壊しましょう！",
-      "様々な惑星が登場します！がんばって！！"
     ]
         
     y_offset = how_to_play_title_rect.bottom + 50
