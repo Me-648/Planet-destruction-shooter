@@ -11,9 +11,9 @@ class MultiShotMidBoss(MidBoss):
       image_path='mid_boss/multi_shot_mid_boss.png',
       hp = 120, 
       speed_x = 2,
-      shoot_cooldown = 1200,
-      score_value = 1200,
-      damage_amount = 1,
+      shoot_cooldown = 2000,
+      score_value = 1000,
+      damage_amount = 2,
       size=(250, 250)
     )
     self.shot_image_path = os.path.join("assets", "images", "shots", "shot_multi_shot_mid_boss.png")

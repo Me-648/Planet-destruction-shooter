@@ -8,10 +8,10 @@ class HealItem(BaseItem):
     super().__init__(screen_width, screen_height, size, image_path)
 
     # 回復量
-    self.heal_amount = 1
+    self.heal_amount = 2
   
   def apply_effect(self, player_instance, game_screen_instance):
-    max_hp = 3
+    max_hp = player_instance.max_hp
 
     # 最大HPを超えないように回復
     if player_instance.hp < max_hp:

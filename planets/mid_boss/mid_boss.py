@@ -43,6 +43,9 @@ class MidBoss(pygame.sprite.Sprite):
     self.shoot_cooldown = shoot_cooldown
     self.last_shot_time = pygame.time.get_ticks()
 
+    # 倒されたかどうかのフラグ
+    self.is_destroyed = False
+
   def update(self, game_screen):
     # 登場アニメーション
     if self.is_entering:
@@ -78,9 +81,13 @@ class MidBoss(pygame.sprite.Sprite):
       pygame.draw.rect(screen, (255, 0, 0), (bar_x, bar_y, hp_bar_width, bar_height))
 
   def take_damage(self, damage):
+    if self.is_destroyed:
+      return False
+    
     self.hp -= damage
     if self.hp <= 0:
       self.hp = 0
+      self.is_destroyed = True
       self.kill() # 体力が0になったらスプライトを削除
       return True
     return False
@@ -108,7 +115,8 @@ class MidBoss(pygame.sprite.Sprite):
   
   def on_destroyed(self, game_screen, destroying_player):
     # 中ボスが破壊されたときの処理
-    print("中ボスを倒しました！")
-    # スコア加算
-    if destroying_player:
-      destroying_player.score += self.score_value
+    if not self.is_destroyed:
+      print("中ボスを倒しました！")
+      # スコア加算
+      if destroying_player:
+        destroying_player.score += self.score_value
