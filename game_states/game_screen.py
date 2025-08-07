@@ -23,7 +23,10 @@ from items.piercing_shot_item import PiercingShotItem
 from items.speed_up_item import SpeedUpItem
 from items.invincibility_item import InvincibilityItem
 from items.slow_item import SlowItem
-from planets.mid_boss import MidBoss
+from planets.mid_boss.mid_boss import MidBoss
+from planets.mid_boss.tough_mid_boss import ToughMidBoss
+from planets.mid_boss.quick_mid_boss import QuickMidBoss
+from planets.mid_boss.multi_shot_mid_boss import MultiShotMidBoss
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -37,6 +40,10 @@ class GameScreen(GameState):
     # 共通背景のロード
     background_path = os.path.join("assets", "images", "background.png")
     self.load_scrolling_background(background_path, speed=0.5)
+
+    # BGMのパスを定義
+    self.main_bgm_path = os.path.join('assets', 'sounds', 'game_bgm.mp3')
+    self.mid_boss_bgm_path = os.path.join('assets', 'sounds', 'mid_boss_bgm.mp3')
 
     # 惑星破壊音のロード
     self.explosion_sound = None
@@ -114,12 +121,32 @@ class GameScreen(GameState):
     # 中ボス関連のプロパティ
     self.mid_boss = None
     self.mid_boss_spawn_counter = 0
-    self.mid_boss_spawn_threshold = 100
+    self.mid_boss_spawn_threshold = 3
 
     # 一時停止状態のフラグ
     self.is_paused = False
+    # 中ボスBGMが再生中かのフラグ
+    self.is_mid_boss_bgm = False
 
     self.reset_game()
+
+  def play_main_bgm(self):
+    # 通常時のBGMを再生
+    if not pygame.mixer.music.get_busy() or self.is_mid_boss_bgm:
+      pygame.mixer.music.stop()
+      pygame.mixer.music.load(self.main_bgm_path)
+      pygame.mixer.music.set_volume(0.1)
+      pygame.mixer.music.play(-1)
+      self.is_mid_boss_bgm = False
+
+  def play_mid_boss_bgm(self):
+    # 中ボス戦のBGMを再生
+    if not pygame.mixer.music.get_busy() or not self.is_mid_boss_bgm:
+      pygame.mixer.music.stop()
+      pygame.mixer.music.load(self.mid_boss_bgm_path)
+      pygame.mixer.music.set_volume(0.15)
+      pygame.mixer.music.play(-1)
+      self.is_mid_boss_bgm = True
 
   def reset_game(self):
     player_size = 70
@@ -146,7 +173,7 @@ class GameScreen(GameState):
     self.players.add(self.player1, self.player2)
 
     # 隕石を生成
-    pygame.time.set_timer(self.ADDPLANET, 550)
+    pygame.time.set_timer(self.ADDPLANET, 700)
     # アイテムを生成
     pygame.time.set_timer(self.ADDITEM, 5000)
 
@@ -157,6 +184,8 @@ class GameScreen(GameState):
     # 中ボス関連のプロパティをリセット
     self.mid_boss = None
     self.mid_boss_spawn_counter = 0
+
+    self.play_main_bgm()
 
   def handle_event(self, event):
     if event.type == pygame.KEYDOWN:
@@ -279,10 +308,10 @@ class GameScreen(GameState):
     self.enemy_shots.update()
     self.items.update()
 
-    # 破片の更新（引数なしに変更）
+    # 破片の更新
     self.debris.update()
 
-    # 破片とプレイヤーの衝突判定（修正）
+    # 破片とプレイヤーの衝突判定
     debris_hit_players = pygame.sprite.groupcollide(self.debris, self.players, True, False)
     for debris_piece, hit_players_list in debris_hit_players.items():
       for player in hit_players_list:
@@ -296,63 +325,54 @@ class GameScreen(GameState):
     for shot in self.shots.copy():
       if not shot.alive():
         continue
-        
+          
       planets_hit_by_shot = pygame.sprite.spritecollide(shot, self.planets, False, pygame.sprite.collide_mask)
       for planet in planets_hit_by_shot:
         if not planet.alive():
           continue
           
+        planet_destroyed = False
+        
         # 貫通ショットの場合
         if isinstance(shot, PiercingShot):
           if planet not in shot.hit_enemies:
             planet_destroyed = planet.take_damage(shot.damage)
             shot.hit_enemies.add(planet)
-
-            if planet_destroyed:
-              destroying_player = shot.owner_player
-              if destroying_player:
-                destroying_player.score += planet.score_value
-                if destroying_player.score < 0:
-                  destroying_player.score = 0
-              
-              if self.explosion_sound:
-                self.explosion_sound.play()
-              planet.on_destroyed(self, destroying_player)
-              planet.kill()
-
+        # 通常ショットの場合
         else:
           planet_destroyed = planet.take_damage(shot.damage)
           shot.kill()
 
-          if planet_destroyed:
-            # 倒したのが中ボスだった場合
-            if isinstance(planet, MidBoss):
-                print("中ボスを倒しました！")
-                destroying_player = shot.owner_player
-                if destroying_player:
-                    destroying_player.score += planet.score_value
-                
-                # 中ボス変数をリセット
-                self.mid_boss = None
-                self.mid_boss_spawn_counter = 0
-                
-            else: # 倒したのが通常惑星だった場合
-                self.mid_boss_spawn_counter += 1
-                print(f"惑星破壊数: {self.mid_boss_spawn_counter}")
-                if self.mid_boss is None and self.mid_boss_spawn_counter >= self.mid_boss_spawn_threshold:
-                  self.spawn_mid_boss()
-
-            destroying_player = shot.owner_player
+        if planet_destroyed:
+          destroying_player = shot.owner_player
+          
+          # 倒したのが中ボスだった場合
+          if isinstance(planet, MidBoss):
+            print("中ボスを倒しました！")
             if destroying_player:
               destroying_player.score += planet.score_value
-              if destroying_player.score < 0:
-                destroying_player.score = 0
-            
-            if self.explosion_sound:
-              self.explosion_sound.play()
-            planet.on_destroyed(self, destroying_player)
-            planet.kill()
+            self.play_main_bgm()
+            self.mid_boss = None
+            self.mid_boss_spawn_counter = 0
+          else: # 倒したのが通常惑星だった場合
+            self.mid_boss_spawn_counter += 1
+            print(f"惑星破壊数: {self.mid_boss_spawn_counter}")
+            if self.mid_boss is None and self.mid_boss_spawn_counter >= self.mid_boss_spawn_threshold:
+              self.spawn_mid_boss()
+
+          if destroying_player:
+            destroying_player.score += planet.score_value
+            if destroying_player.score < 0:
+              destroying_player.score = 0
           
+          if self.explosion_sound:
+            self.explosion_sound.play()
+          
+          planet.on_destroyed(self, destroying_player)
+          planet.kill()
+        
+        # 通常ショットは1回当たったら終了
+        if not isinstance(shot, PiercingShot):
           break
 
     # 敵のショットがプレイヤーに当たる衝突判定
@@ -363,21 +383,43 @@ class GameScreen(GameState):
           player.take_damage(enemy_shot.damage)
 
     # 惑星とプレイヤーの当たり判定
-    player_hit_planets = pygame.sprite.groupcollide(self.players, self.planets, False, True)
+    # 中ボスとプレイヤーの衝突判定(中ボスは消えない)
+    if self.mid_boss and self.mid_boss.alive():
+      mid_boss_hit_players = pygame.sprite.spritecollide(self.mid_boss, self.players, False, pygame.sprite.collide_mask)
+      for player in mid_boss_hit_players:
+        if player.is_alive() and not player.is_item_invincible_active:
+          damage_from_mid_boss = self.mid_boss.damage_amount if hasattr(self.mid_boss, 'damage_amount') else 1
+          player.take_damage(damage_from_mid_boss)
+    
+    # 中ボス以外の惑星グループを作成
+    non_boss_planets = pygame.sprite.Group()
+    for planet in self.planets:
+      if not isinstance(planet, MidBoss):
+        non_boss_planets.add(planet)
+
+    # 中ボス以外の惑星とプレイヤーの衝突判定
+    player_hit_planets = pygame.sprite.groupcollide(self.players, non_boss_planets, False, True)
     for player, hit_planets_list in player_hit_planets.items():
       for planet in hit_planets_list:
         if player.is_alive():
+          # 無敵状態の場合、惑星は消えるがダメージは受けない
           if player.is_item_invincible_active:
             if self.explosion_sound:
               self.explosion_sound.play()
+            planet.on_destroyed(self, player)
           else:
-            damage_from_planet = 1
+            # 無敵ではない場合、ダメージを受けて惑星も消える
+            damage_from_planet = planet.damage_amount if hasattr(planet, 'damage_amount') else 1
             player.take_damage(damage_from_planet)
+            if self.explosion_sound:
+              self.explosion_sound.play()
+            planet.on_destroyed(self, player)
+          
+          # 惑星破壊数をカウント
           self.mid_boss_spawn_counter += 1
           print(f"惑星破壊数: {self.mid_boss_spawn_counter}")
           if self.mid_boss is None and self.mid_boss_spawn_counter >= self.mid_boss_spawn_threshold:
             self.spawn_mid_boss()
-
 
     # プレイヤーとアイテムの衝突判定
     player_hit_items = pygame.sprite.groupcollide(self.players, self.items, False, True)
@@ -419,10 +461,20 @@ class GameScreen(GameState):
 
   # 中ボス生成
   def spawn_mid_boss(self):
-    self.mid_boss = MidBoss(self.screen_width, self.screen_height)
+    mid_boss_types = [
+      ToughMidBoss,
+      QuickMidBoss,
+      MultiShotMidBoss
+    ]
+        
+    selected_boss_class = random.choice(mid_boss_types)
+        
+    self.play_mid_boss_bgm()
+
+    self.mid_boss = selected_boss_class(self.screen_width, self.screen_height)
     self.all_sprites.add(self.mid_boss)
-    self.planets.add(self.mid_boss) # 惑星グループにも追加して、ショットとの衝突判定ができるようにする
-    print("中ボスが出現しました！")
+    self.planets.add(self.mid_boss)
+    print(f"{selected_boss_class.__name__}が出現しました！")
   
   def draw(self):
     self.draw_background()

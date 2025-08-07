@@ -3,21 +3,23 @@ import os
 from shots.mid_boss_shot import MidBossShot
 
 class MidBoss(pygame.sprite.Sprite):
-  def __init__(self, screen_width, screen_height):
+  def __init__(self, screen_width, screen_height, image_path='mid_boss/original_mid_boss.png', hp=100, speed_x=2, shoot_cooldown=1000, score_value=500, damage_amount=1, size=(250, 250)):
     super().__init__()
     self.screen_width = screen_width
     self.screen_height = screen_height
 
-    # 中ボス画像のロード
-    image_path = os.path.join('assets', 'images', 'planets', 'mid_boss.png')
-    if os.path.exists(image_path):
-      original_image = pygame.image.load(image_path).convert_alpha()
-      # 中ボスのサイズを調整
-      self.image = pygame.transform.scale(original_image, (250, 250))
+    # 画像のロード
+    full_image_path = os.path.join('assets', 'images', 'planets', image_path)
+    if os.path.exists(full_image_path):
+      original_image = pygame.image.load(full_image_path).convert_alpha()
+      self.image = pygame.transform.scale(original_image, size)
     else:
-      print(f"中ボス画像が見つかりません: {image_path}")
-      self.image = pygame.Surface([200, 200])
+      print(f"中ボス画像が見つかりません: {full_image_path}")
+      self.image = pygame.Surface(size)
       self.image.fill((255, 255, 0))
+
+    # デフォルトのショット画像パスを設定
+    self.shot_image_path = os.path.join("assets", "images", "shots", "enemy_shot.png")
 
     self.rect = self.image.get_rect()
 
@@ -25,22 +27,20 @@ class MidBoss(pygame.sprite.Sprite):
     self.rect.centerx = self.screen_width // 2
     self.rect.top = -self.rect.height
 
-    # 中ボスの初期ステータス
-    self.hp = 100
-    self.max_hp = 100
+    # ステータス
+    self.hp = hp
+    self.max_hp = hp
     self.speed = 1
-    self.speed_x = 2
-    self.damage_amount = 2
-    self.score_value = 500
+    self.speed_x = speed_x
+    self.damage_amount = damage_amount
+    self.score_value = score_value
 
     # 登場アニメーション用
     self.is_entering = True
     self.target_y = self.screen_height // 8
     
-    # 左右移動用に追加
-    self.speed_x = 2
     # 攻撃関連のプロパティを初期化
-    self.shoot_cooldown = 1000
+    self.shoot_cooldown = shoot_cooldown
     self.last_shot_time = pygame.time.get_ticks()
 
   def update(self, game_screen):
@@ -86,7 +86,7 @@ class MidBoss(pygame.sprite.Sprite):
     return False
   
   def shoot(self, game_screen):
-    """中ボスがプレイヤーを狙って弾を発射する処理"""
+    # 中ボスがプレイヤーを狙って弾を発射する処理
     target_players = [p for p in game_screen.players if p.is_alive()]
     if not target_players:
       return
@@ -102,12 +102,12 @@ class MidBoss(pygame.sprite.Sprite):
       direction_y /= length
     
     # 弾の生成
-    enemy_shot = MidBossShot(self.rect.centerx, self.rect.bottom, direction_x, direction_y, self.damage_amount)
+    enemy_shot = MidBossShot(self.rect.centerx, self.rect.bottom, direction_x, direction_y, self.damage_amount, self.shot_image_path)
     game_screen.all_sprites.add(enemy_shot)
     game_screen.enemy_shots.add(enemy_shot)
   
   def on_destroyed(self, game_screen, destroying_player):
-    """中ボスが破壊されたときの処理"""
+    # 中ボスが破壊されたときの処理
     print("中ボスを倒しました！")
     # スコア加算
     if destroying_player:
