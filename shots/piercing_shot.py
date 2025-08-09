@@ -6,7 +6,7 @@ class PiercingShot(Shot):
     image_path = os.path.join('assets', 'images', 'shots', 'shot_piercing.png')
     size = (24, 130)
     color = (200, 0, 255)
-    damage = 100
+    damage = 50
     if is_power_active:
       damage *= 2
 

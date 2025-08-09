@@ -9,7 +9,7 @@ class MultiShotMidBoss(MidBoss):
       screen_width, 
       screen_height,
       image_path='mid_boss/multi_shot_mid_boss.png',
-      hp = 120, 
+      hp = 150,
       speed_x = 2,
       shoot_cooldown = 2000,
       score_value = 1000,

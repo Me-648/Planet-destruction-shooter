@@ -38,9 +38,9 @@ class HowToPlayScreen(GameState):
     planet_info = [
       {"name": "惑星", "image": "planet_normal.png", "description": "普通の惑星。"},
       {"name": "岩石惑星", "image": "planet_rock.png", "description": "破壊すると破片が飛ぶ。"},
-      {"name": "中惑星", "image": "planet_mid.png", "description": "少し耐久力が高い"},
+      {"name": "中惑星", "image": "planet_mid.png", "description": "少し耐久力が高い。"},
       {"name": "氷惑星", "image": "planet_ice.png", "description": "破壊したプレイヤーは一定時間減速する。"},
-      {"name": "ウイルス惑星", "image": "planet_virus.png", "description": "破壊するとダメージを受ける"},
+      {"name": "ウイルス惑星", "image": "planet_virus.png", "description": "破壊するとダメージを受ける。"},
       {"name": "UFO", "image": "planet_ufo.png", "description": "近くにいるプレイヤーを攻撃してくる。"},
       {"name": "惑星...？", "image": "planet_penalty_1.png", "description": "破壊するとスコアが減少する。"},
     ]
@@ -137,11 +137,11 @@ class HowToPlayScreen(GameState):
     y_offset = section_title_rect.bottom + 50
     for item in page_data["content"]:
       if "loaded_image" in item:
-        image_rect = item["loaded_image"].get_rect(topleft=(self.screen_width // 4, y_offset))
+        image_rect = item["loaded_image"].get_rect(topleft=(self.screen_width // 5.5, y_offset))
         self.screen.blit(item["loaded_image"], image_rect)
                 
       # テキストを画像右側に配置
-      text_x = self.screen_width // 4 + 80
+      text_x = self.screen_width // 5.5 + 80
       text_y = y_offset + 5
             
       # 説明文が長い場合は自動で折り返す

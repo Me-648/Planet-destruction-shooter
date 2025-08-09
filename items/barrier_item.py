@@ -8,8 +8,8 @@ class BarrierItem(BaseItem):
     super().__init__(screen_width, screen_height, size, image_path)
 
   def apply_effect(self, player_instance, game_screen_instance):
-    if not player_instance.has_active_barrier():
+    if player_instance.barrier_count < player_instance.max_barrier_count:
       player_instance.activate_barrier()
-      print(f"プレイヤー{player_instance.player_id}がバリアアイテムを取得しました！")
+      print(f"プレイヤー{player_instance.player_id}がバリアアイテムを取得しました！（バリア再展開）")
     else:
-      print(f"プレイヤー{player_instance.player_id}は既にバリアを持っています。")
+      print(f"プレイヤー{player_instance.player_id}のバリアは既に最大です。")

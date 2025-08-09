@@ -66,19 +66,37 @@ class MidBoss(pygame.sprite.Sprite):
         self.shoot(game_screen)
     
   def draw_hp_bar(self, screen):
-    # 体力バーを描画するメソッド
     if self.hp > 0:
       bar_width = self.rect.width
-      bar_height = 10
+      bar_height = 12
       bar_x = self.rect.x
-      bar_y = self.rect.y - bar_height - 5
-      
-      # 背景のバー（灰色）
-      pygame.draw.rect(screen, (100, 100, 100), (bar_x, bar_y, bar_width, bar_height))
-      
-      # 現在のHPのバー（赤色）
-      hp_bar_width = (self.hp / self.max_hp) * bar_width
-      pygame.draw.rect(screen, (255, 0, 0), (bar_x, bar_y, hp_bar_width, bar_height))
+      bar_y = self.rect.y - bar_height - 8
+        
+      # 背景のバー（暗いグレー）
+      pygame.draw.rect(screen, (40, 40, 40), (bar_x, bar_y, bar_width, bar_height))
+        
+      # HP割合を計算
+      hp_ratio = self.hp / self.max_hp
+      current_bar_width = hp_ratio * bar_width
+        
+      # HP割合に応じて色を決定
+      if hp_ratio > 0.7:
+        # 70%以上：緑色
+        hp_color = (0, 255, 0)
+      elif hp_ratio > 0.4:
+        # 40-70%：黄色
+        hp_color = (255, 255, 0)
+      elif hp_ratio > 0.2:
+        # 20-40%：オレンジ
+        hp_color = (255, 165, 0)
+      else:
+        # 20%以下：赤色
+        hp_color = (255, 0, 0)
+        
+      # 現在のHPのバー
+      if current_bar_width > 0:
+        pygame.draw.rect(screen, hp_color, (bar_x, bar_y, current_bar_width, bar_height))
+        
 
   def take_damage(self, damage):
     if self.is_destroyed:
@@ -88,7 +106,7 @@ class MidBoss(pygame.sprite.Sprite):
     if self.hp <= 0:
       self.hp = 0
       self.is_destroyed = True
-      self.kill() # 体力が0になったらスプライトを削除
+      self.kill()
       return True
     return False
   

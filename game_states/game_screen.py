@@ -3,17 +3,14 @@ import random
 import os
 from game_states.game_state import GameState
 from player import Player
-from shots.shot import Shot
 from shots.piercing_shot import PiercingShot
 from planets.normal_planet import NormalPlanet
 from planets.rock_planet import RockPlanet
-from planets.debris import Debris
 from planets.ice_planet import IcePlanet
 from planets.mid_planet import MidPlanet
 from planets.virus_planet import VirusPlanet
 from planets.penalty_planet import PenaltyPlanet
 from planets.ufo_planet import UFOPlanet
-from shots.enemy_shot import EnemyShot
 from items.score_item import ScoreItem
 from items.power_shot_item import PowerShotItem
 from items.heal_item import HealItem
@@ -27,6 +24,7 @@ from planets.mid_boss.mid_boss import MidBoss
 from planets.mid_boss.tough_mid_boss import ToughMidBoss
 from planets.mid_boss.quick_mid_boss import QuickMidBoss
 from planets.mid_boss.multi_shot_mid_boss import MultiShotMidBoss
+from ui.item_effect_ui import ItemEffectUI
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -121,12 +119,16 @@ class GameScreen(GameState):
     # 中ボス関連のプロパティ
     self.mid_boss = None
     self.mid_boss_spawn_counter = 0
-    self.mid_boss_spawn_threshold = 3
+    self.mid_boss_spawn_threshold = 100
 
     # 一時停止状態のフラグ
     self.is_paused = False
+
     # 中ボスBGMが再生中かのフラグ
     self.is_mid_boss_bgm = False
+
+    # アイテム効果UIを初期化
+    self.item_effect_ui = ItemEffectUI(self.screen_width, self.screen_height)
 
     self.reset_game()
 
@@ -501,6 +503,9 @@ class GameScreen(GameState):
     player2_hp_text = self.small_font.render(f"P2HP: {self.player2.hp}", True, GREEN)
     self.screen.blit(player2_score_text, (self.screen_width - player2_score_text.get_width() - 10, 10))
     self.screen.blit(player2_hp_text, (self.screen_width - player2_hp_text.get_width() - 10, 60))
+
+    # アイテム効果UIを描画
+    self.item_effect_ui.draw_all_effects(self.screen, self.player1, self.player2)
 
     if self.is_paused:
       # 半透明の黒いオーバーレイを描画

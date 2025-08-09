@@ -38,8 +38,8 @@ class Player(pygame.sprite.Sprite):
     self.speed_up_multiplier = 1.0
 
     self.score = 0
-    self.hp = 100
-    self.max_hp = 100
+    self.hp = 10
+    self.max_hp = 10
 
     # 被弾後の無敵時間
     self.last_hit_time = 0
@@ -130,7 +130,8 @@ class Player(pygame.sprite.Sprite):
     self.power_shot_duration = 0
 
     # バリア関連のプロパティ
-    self.has_barrier = False
+    self.barrier_count = 0
+    self.max_barrier_count = 3
 
     self.barrier_effect_image = None
     self.barrier_effect_rect = None
@@ -140,7 +141,6 @@ class Player(pygame.sprite.Sprite):
       # プレイヤーサイズに比例してバリアサイズを調整
       effect_size = int(self.player_size * 1.1)
       self.barrier_effect_image = pygame.transform.scale(original_barrier_image, (effect_size, effect_size))
-      self.barrier_effect_image.set_alpha(150)
       
       self.barrier_effect_rect = self.barrier_effect_image.get_rect()
       self.barrier_effect_rect.center = self.rect.center
@@ -254,9 +254,6 @@ class Player(pygame.sprite.Sprite):
     self.rect.x = max(0, min(self.rect.x, self.screen_width - self.player_size))
     self.rect.y = max(self.min_y, min(self.rect.y, self.screen_height - self.player_size))
 
-    # バリアエフェクト
-    if self.has_barrier and self.barrier_effect_rect:
-      self.barrier_effect_rect.center = self.rect.center
 
   def shoot(self):
     if self.hp <= 0:
@@ -304,11 +301,12 @@ class Player(pygame.sprite.Sprite):
     if current_time - self.last_hit_time < self.invicibility_duration:
         return False
 
-    if self.has_barrier:
-      self.has_barrier = False
+    # バリア回数チェック
+    if self.barrier_count > 0:
+      self.barrier_count -= 1
       if self.barrier_break_sound:
         self.barrier_break_sound.play()
-      print(f"プレイヤー{self.player_id}のバリアがダメージを防ぎました！")
+      print(f"プレイヤー{self.player_id}のバリアがダメージを防ぎました！残りバリア: {self.barrier_count}")
       return False
     
     self.hp -= damage_amount
@@ -353,13 +351,13 @@ class Player(pygame.sprite.Sprite):
 
   # バリア関連のメソッド
   def activate_barrier(self):
-    self.has_barrier = True
+    self.barrier_count = self.max_barrier_count
     if self.barrier_effect_rect:
       self.barrier_effect_rect.center = self.rect.center
-    print(f"プレイヤー{self.player_id}にバリアを展開しました！")
+    print(f"プレイヤー{self.player_id}にバリアを展開しました！回数: {self.barrier_count}")
   
   def has_active_barrier(self):
-    return self.has_barrier
+    return self.barrier_count > 0
   
   # 三方向ショットをアクティブにするメソッド
   def activate_triple_shot(self, duration_ms):
@@ -422,6 +420,11 @@ class Player(pygame.sprite.Sprite):
       screen.blit(current_image, self.rect)
   
     # バリアエフェクトの描画
-    if self.has_barrier and self.barrier_effect_image:
+    if self.barrier_count > 0 and self.barrier_effect_image:
       self.barrier_effect_rect.center = self.rect.center
-      screen.blit(self.barrier_effect_image, self.barrier_effect_rect)
+            
+      # バリア回数に応じて透明度を調整
+      alpha_value = min(200, 100 + (self.barrier_count * 50))
+      barrier_image_copy = self.barrier_effect_image.copy()
+      barrier_image_copy.set_alpha(alpha_value)
+      screen.blit(barrier_image_copy, self.barrier_effect_rect)
