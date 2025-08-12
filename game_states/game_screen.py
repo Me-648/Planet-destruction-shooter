@@ -413,8 +413,6 @@ class GameScreen(GameState):
             # 無敵ではない場合、ダメージを受けて惑星も消える
             damage_from_planet = planet.damage_amount if hasattr(planet, 'damage_amount') else 1
             player.take_damage(damage_from_planet)
-            if self.explosion_sound:
-              self.explosion_sound.play()
             planet.on_destroyed(self, player)
           
           # 惑星破壊数をカウント

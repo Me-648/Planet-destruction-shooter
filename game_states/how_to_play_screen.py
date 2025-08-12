@@ -51,7 +51,7 @@ class HowToPlayScreen(GameState):
       {"name": "パワーショット", "image": "item_powershot.png", "description": "一定時間、弾の威力が5倍になる。"},
       {"name": "三方向ショット", "image": "item_triple_shot.png", "description": "一定時間、3方向に弾を発射する。"},
       {"name": "貫通ショット", "image": "item_piercing_shot.png", "description": "3発、惑星を貫通するショットが打てる。"},
-      {"name": "バリア", "image": "item_barrier.png", "description": "攻撃を1度防ぐバリアを展開。"},
+      {"name": "バリア", "image": "item_barrier.png", "description": "攻撃を3回防ぐバリアを展開。"},
       {"name": "スロー", "image": "item_slow.png", "description": "一定時間、惑星の動きが遅くなる。"},
       {"name": "レインボースター", "image": "item_invincibility.png", "description": "一定時間、ダメージを受けない。"},
     ]
@@ -64,7 +64,7 @@ class HowToPlayScreen(GameState):
 
     return [
       {"title": "遊び方", "type": "instructions", "content": [
-        "プレイヤー1: A/D/W/Sキーで移動, SPACEキーでショット",
+        "プレイヤー1: W/A/S/Dキーで移動, SPACEキーでショット",
         "プレイヤー2: 矢印キーで移動, ENTERキーでショット",
         "Pキーで一時停止/再開",
         "宙から降ってくる惑星を破壊しましょう！",
