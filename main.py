@@ -15,9 +15,7 @@ pygame.mixer.init()
 # 初期解像度
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 900
-# フルスクリーンに設定
-screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-SCREEN_WIDTH, SCREEN_HEIGHT = screen.get_size()
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 pygame.display.set_caption("惑星破壊シューティングII (準備中)")
 
@@ -29,7 +27,7 @@ GAME_STATE_GAME_OVER = "game_over" #ゲームオーバー画面
 
 class GameManager:
   def __init__(self):
-    self.screen = screen
+    self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     self.screen_width, self.screen_height = self.screen.get_size()
 
     # フォント設定
@@ -45,14 +43,18 @@ class GameManager:
     self.bgm_paths = {
       GAME_STATE_TITLE: os.path.join('assets', 'sounds', 'title_bgm.mp3'), # タイトルBGM
       GAME_STATE_PLAYING: os.path.join('assets', 'sounds', 'game_bgm.mp3'), # ゲームプレイBGM
+      GAME_STATE_HOW_TO_PLAY: os.path.join('assets', 'sounds', 'title_bgm.mp3'),  # 遊び方画面(titleと同じ)
       GAME_STATE_GAME_OVER: os.path.join('assets', 'sounds', 'game_over_bgm.mp3'), # ゲームオーバーBGM
     }
     # 各BGMの音量
     self.bgm_volumes = {
       GAME_STATE_TITLE: 1.0,
-      GAME_STATE_PLAYING: 0.3,
-      GAME_STATE_GAME_OVER: 0.6,
+      GAME_STATE_PLAYING: 0.1,
+      GAME_STATE_HOW_TO_PLAY: 1.0,
+      GAME_STATE_GAME_OVER: 0.3,
     }
+
+    self.current_bgm_path = None
 
     # 各ゲーム状態のインスタンス
     self.title_screen = TitleScreen(self.screen, self.font, self.small_font, self)
@@ -69,22 +71,38 @@ class GameManager:
 
   def change_state(self, new_state_name, p1_score=0, p2_score=0):
     if new_state_name in self.states:
-      pygame.mixer.music.stop()
-
       new_bgm_path = self.bgm_paths.get(new_state_name)
-      if new_bgm_path and os.path.exists(new_bgm_path):
-        pygame.mixer.music.load(new_bgm_path)
 
-        volume = self.bgm_volumes.get(new_state_name, 1.0)
-        pygame.mixer.music.set_volume(volume)
+      should_change_bgm = False
 
-        if new_state_name == GAME_STATE_GAME_OVER:
-          pygame.mixer.music.play(0)
+      # 現在BGMが再生されていない場合、またはBGMパスが存在しない場合は、常に切り替える
+      if not pygame.mixer.music.get_busy() or new_bgm_path is None:
+        should_change_bgm = True
+      # 新しいBGMパスが現在のBGMパスと異なる場合 (つまり、別のBGMに切り替わる場合)
+      elif new_bgm_path != self.current_bgm_path:
+        should_change_bgm = True
+      # 新しい状態がゲームオーバー画面の場合 (1回再生のため、常に切り替え)
+      elif new_state_name == GAME_STATE_GAME_OVER:
+        should_change_bgm = True
+
+      if should_change_bgm:
+        pygame.mixer.music.stop()
+        self.current_bgm_path = None
+
+        if new_bgm_path and os.path.exists(new_bgm_path):
+          pygame.mixer.music.load(new_bgm_path)
+          volume = self.bgm_volumes.get(new_state_name, 1.0)
+          pygame.mixer.music.set_volume(volume)
+
+          if new_state_name == GAME_STATE_GAME_OVER:
+            pygame.mixer.music.play(0)
+          else:
+            pygame.mixer.music.play(-1)
+          self.current_bgm_path = new_bgm_path
         else:
-          pygame.mixer.music.play(-1)
-        
-      else:
-        print(f"bgmない {new_state_name} / {new_bgm_path}")
+          print(f"bgmない {new_state_name} / {new_bgm_path}")
+      
+      self.current_state_name = new_state_name
 
       if new_state_name == GAME_STATE_PLAYING:
         self.game_screen.reset_game()

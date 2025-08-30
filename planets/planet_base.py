@@ -19,6 +19,8 @@ class BasePlanet(pygame.sprite.Sprite):
     self.rect.y = -self.rect.height
 
     self.speed = speed
+    self.speed_x = 0
+    self.speed_y = speed
     self.hp = hp
     self.score_value = score_value
     self.screen_height = screen_height
@@ -26,25 +28,27 @@ class BasePlanet(pygame.sprite.Sprite):
 
     self.destroyed = False
 
-  def update(self):
-    self.rect.y += self.speed
+  def update(self, game_screen=None):
+    if game_screen and game_screen.is_planet_slowdown_active:
+        slowdown_factor = game_screen.planet_slowdown_factor
+    else:
+        slowdown_factor = 1.0
+
+    self.rect.x += self.speed_x * slowdown_factor
+    self.rect.y += self.speed_y * slowdown_factor
 
     # 画面下まで行ったら消える
     if self.rect.y > self.screen_height:
       self.kill()
 
   def take_damage(self, damage_amount):
-    if self.destroyed:
-      return
-
     self.hp -= damage_amount
-    print(f"惑星HP: {self.hp} / ダメージ: {damage_amount}")
     if self.hp <= 0:
-        self.destroyed = True
-        print("惑星が破壊されました")
-        self.kill()
-        self.on_destroyed()
+      self.kill()
+      self.destroyed = True
+      return True # 破壊されたらTrue
+    return False
 
   # 惑星が破壊されたときに特別な処理を行うためのメソッド (デフォルトは何もしない)
-  def on_destroyed(self):
+  def on_destroyed(self, game_screen_instance, destroying_player):
     pass

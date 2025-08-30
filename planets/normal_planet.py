@@ -9,6 +9,6 @@ class NormalPlanet(BasePlanet):
     hp = 1
 
     score_value = 10
-    # image_path = 'normal_planet.png'
-    super().__init__(screen_width, screen_height, size, color, hp, speed, score_value)
-    # super().__init__(screen_width, screen_height, size, color, hp, speed, score_value, image_path)
+    image_path = 'planets/planet_normal.png'
+    super().__init__(screen_width, screen_height, size, color, hp, speed, score_value, image_path)
+    
