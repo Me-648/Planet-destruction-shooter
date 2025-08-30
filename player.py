@@ -310,6 +310,8 @@ class Player(pygame.sprite.Sprite):
       return False
     
     self.hp -= damage_amount
+    if self.hp <= 0:
+      self.hp = 0
     self.last_hit_time = current_time
     print(f"プレイヤー{self.player_id}がダメージを受けました！残りHP: {self.hp}")
     
