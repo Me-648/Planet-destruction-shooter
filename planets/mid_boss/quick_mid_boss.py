@@ -8,7 +8,7 @@ class QuickMidBoss(MidBoss):
       screen_width, 
       screen_height,
       image_path='mid_boss/quick_mid_boss.png',
-      hp = 150,
+      hp = 300,
       speed_x = 4,
       shoot_cooldown = 1000,
       score_value = 1000,
