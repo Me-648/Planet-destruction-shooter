@@ -7,7 +7,7 @@ class ToughMidBoss(MidBoss):
       screen_width, 
       screen_height,
       image_path='mid_boss/tough_mid_boss.png', 
-      hp = 230, 
+      hp = 460, 
       speed_x = 1,
       shoot_cooldown = 1500,
       score_value = 1000,
